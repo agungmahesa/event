@@ -3,30 +3,48 @@
 // ================================================================
 
 // ---- AUTH & SECURITY CHECK ----
-// Hide body immediately to prevent flash of content before auth check
+// Always make body visible as failsafe after short timeout
+// (prevents permanent blank page if auth check throws)
+const _authTimeout = setTimeout(() => {
+  document.body.style.visibility = 'visible';
+}, 3000);
+
 if (!window.location.pathname.endsWith('login')) {
   document.body.style.visibility = 'hidden';
 }
 
 (async function checkAdminAuth() {
-  if (window.location.pathname.endsWith('login')) return;
-
-  if (!supabase) {
-    // Supabase not loaded, can't verify - redirect to login
-    window.location.replace('/admin/login');
+  if (window.location.pathname.endsWith('login')) {
+    clearTimeout(_authTimeout);
     return;
   }
 
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) {
-    window.location.replace('/admin/login');
-  } else {
+  try {
+    if (!supabase || !supabase.auth) {
+      console.warn('Supabase not initialized, redirecting to login');
+      window.location.replace('/admin/login');
+      return;
+    }
+
+    const result = await supabase.auth.getSession();
+    const session = result?.data?.session;
+
+    if (!session) {
+      window.location.replace('/admin/login');
+    } else {
+      clearTimeout(_authTimeout);
+      document.body.style.visibility = 'visible';
+    }
+  } catch (err) {
+    console.error('Auth check error:', err);
+    // On error, show page anyway — don't leave user with blank screen
+    clearTimeout(_authTimeout);
     document.body.style.visibility = 'visible';
   }
 })();
 
 async function adminLogout() {
-  if (supabase) await supabase.auth.signOut();
+  try { if (supabase?.auth) await supabase.auth.signOut(); } catch (_) {}
   window.location.replace('/admin/login');
 }
 
