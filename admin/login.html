@@ -10,8 +10,7 @@
 
 <div style="width:100%;max-width:400px;padding:1.5rem;">
   <div style="text-align:center;margin-bottom:2rem;">
-    <img src="../img/logo.png" alt="Matchaji" style="height:56px;margin-bottom:0.75rem;" onerror="this.style.display='none';document.getElementById('logo-fallback').style.display='block'">
-    <div id="logo-fallback" style="font-size:3rem;margin-bottom:0.5rem;display:none;">🍵</div>
+    <img src="../img/logo.png" alt="Matchaji" style="height:56px;margin-bottom:0.75rem;" onerror="this.style.display='none'">
     <h1 style="font-size:1.75rem;">Matchaji Roadshow Admin</h1>
     <p class="text-sm text-muted">Selamat datang! Silakan masuk ke panel admin.</p>
   </div>
@@ -39,50 +38,94 @@
 </div>
 
 <div id="toast-container"></div>
+
+<!-- Supabase SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="../js/app.js"></script>
+
 <script>
-  // Redirect jika sudah punya session aktif
+  // ---- Inisialisasi Supabase langsung (standalone, tanpa app.js) ----
+  const SUPA_URL = 'https://vzdpvomzejaulahohyce.supabase.co';
+  const SUPA_KEY = 'sb_publishable_osvY0dcqVEts9e4X3CclZA_Cr12kwJ1';
+
+  let _db = null;
+  try {
+    // CDN mengekspos window.supabase = { createClient, ... }
+    _db = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+  } catch (err) {
+    console.error('Supabase init error:', err);
+  }
+
+  // ---- Minimal toast ----
+  function showToast(message, type = 'info') {
+    let container = document.getElementById('toast-container');
+    const icons = { success: '✅', error: '❌', info: '💡' };
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `<span>${icons[type] || '💬'}</span><span>${message}</span>`;
+    container.appendChild(toast);
+    setTimeout(() => {
+      toast.style.animation = 'toastOut 0.3s ease forwards';
+      setTimeout(() => toast.remove(), 300);
+    }, 3500);
+  }
+
+  function showError(msg) {
+    const box = document.getElementById('login-error');
+    document.getElementById('login-error-msg').textContent = msg;
+    box.style.display = 'block';
+  }
+
+  // ---- Redirect jika sudah punya session aktif ----
   (async () => {
-    if (!supabase) return;
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) window.location.replace('/admin');
+    if (!_db) return;
+    try {
+      const { data: { session } } = await _db.auth.getSession();
+      if (session) window.location.replace('/admin');
+    } catch (_) {}
   })();
 
+  // ---- Form Submit ----
   document.getElementById('login-form').addEventListener('submit', async (e) => {
     e.preventDefault();
+
     const email = document.getElementById('login-email').value.trim();
     const pass  = document.getElementById('login-pass').value;
+    const btn   = document.getElementById('btn-login');
 
-    const btn     = document.getElementById('btn-login');
-    const errBox  = document.getElementById('login-error');
-    const errMsg  = document.getElementById('login-error-msg');
-
+    document.getElementById('login-error').style.display = 'none';
     btn.disabled = true;
     btn.textContent = 'Memverifikasi...';
-    errBox.style.display = 'none';
+
+    if (!_db) {
+      showError('Koneksi ke server gagal. Periksa koneksi internet Anda.');
+      btn.disabled = false;
+      btn.textContent = 'Masuk ke Dashboard';
+      return;
+    }
 
     try {
-      if (!supabase) throw new Error('Koneksi database tidak tersedia.');
+      const { data, error } = await _db.auth.signInWithPassword({ email, password: pass });
 
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password: pass });
-      if (error) throw error;
+      if (error) {
+        const isWrongCred = error.message?.toLowerCase().includes('invalid') 
+                         || error.status === 400;
+        showError(isWrongCred ? 'Email atau password salah.' : error.message);
+        btn.disabled = false;
+        btn.textContent = 'Masuk ke Dashboard';
+        document.getElementById('login-pass').value = '';
+        return;
+      }
 
       showToast('Login berhasil! Mengalihkan...', 'success');
       setTimeout(() => window.location.replace('/admin'), 800);
 
     } catch (err) {
-      const msg = err.message?.includes('Invalid login') || err.message?.includes('invalid_credentials')
-        ? 'Email atau password salah.'
-        : err.message || 'Login gagal. Coba lagi.';
-
-      errBox.style.display = 'block';
-      errMsg.textContent = msg;
+      showError(err.message || 'Terjadi kesalahan. Coba lagi.');
       btn.disabled = false;
       btn.textContent = 'Masuk ke Dashboard';
-      document.getElementById('login-pass').value = '';
     }
   });
 </script>
+
 </body>
 </html>
