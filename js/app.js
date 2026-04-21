@@ -211,10 +211,14 @@ const DB = {
     return data ? { ...DEFAULT_SETTINGS, ...data } : { ...DEFAULT_SETTINGS };
   },
   async saveSettings(settings) {
-    if (!supabase) return;
+    if (!supabase) return false;
     settings.id = 'global';
     const { error } = await supabase.from('settings').upsert(settings, { onConflict: 'id' });
-    if (error) console.error('saveSettings error:', error);
+    if (error) {
+      console.error('saveSettings error:', error);
+      return false;
+    }
+    return true;
   },
 
   // Upload payment proof

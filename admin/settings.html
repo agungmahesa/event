@@ -201,8 +201,12 @@
       paymentInstructions: document.getElementById('set-payment-instructions').value.trim(),
       banks: bankRows,
     };
-    await DB.saveSettings(settings);
-    showToast('✅ Pengaturan berhasil disimpan!', 'success', 3000);
+    const success = await DB.saveSettings(settings);
+    if (success) {
+      showToast('✅ Pengaturan berhasil disimpan!', 'success', 3000);
+    } else {
+      showToast('Gagal menyimpan. Pastikan akses (RLS) di database sudah diizinkan.', 'error', 5000);
+    }
   }
 
   function resetAllData() {
