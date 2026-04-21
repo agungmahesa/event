@@ -85,8 +85,12 @@ const supabaseUrl = 'https://vzdpvomzejaulahohyce.supabase.co';
 const supabaseKey = 'sb_publishable_osvY0dcqVEts9e4X3CclZA_Cr12kwJ1';
 let supabase = null;
 try {
+  // window.supabase at this point = CDN library namespace { createClient, ... }
   const { createClient } = window.supabase;
   supabase = createClient(supabaseUrl, supabaseKey);
+  // Override window.supabase with our initialized client so all inline scripts
+  // on the page access the client directly (not the library namespace)
+  window.supabase = supabase;
 } catch(e) {
   console.error('Supabase init failed:', e.message);
 }
