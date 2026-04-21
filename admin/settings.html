@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Pengaturan — Matchaji Roadshow Admin</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<div class="admin-layout">
+  <nav class="sidebar">
+    <div class="sidebar-logo" style="padding:0;">
+      <img src="../img/logo.png" alt="Matchaji" style="height:32px;">
+    </div>
+    <div class="sidebar-section-label">Menu</div>
+    <a class="sidebar-link" href="index.html"><span class="icon">📊</span> Dashboard</a>
+    <a class="sidebar-link" href="events.html"><span class="icon">📅</span> Kelola Event</a>
+    <a class="sidebar-link" href="registrants.html"><span class="icon">👥</span> Peserta</a>
+    <a class="sidebar-link" href="checkin.html"><span class="icon">📷</span> QR Check-in</a>
+    <a class="sidebar-link active" href="settings.html"><span class="icon">⚙️</span> Pengaturan</a>
+    <div class="sidebar-section-label" style="margin-top:auto;">Lainnya</div>
+    <a class="sidebar-link" href="../index.html"><span class="icon">🌐</span> Website</a>
+    <a class="sidebar-link" href="#" onclick="adminLogout(); return false;" style="color:var(--red);"><span class="icon">🚪</span> Logout</a>
+  </nav>
+
+  <div class="main-content">
+    <div class="page-header">
+      <h1>⚙️ Pengaturan</h1>
+      <p class="text-sm text-muted">Konfigurasi rekening bank, info penyelenggara, dan instruksi pembayaran.</p>
+    </div>
+
+    <div class="page-body">
+
+      <!-- ===== SECTION: ORGANIZER INFO ===== -->
+      <div class="card mb-3">
+        <h3 style="margin-bottom:1.25rem;">🏢 Info Penyelenggara</h3>
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label" for="set-org-name">Nama Penyelenggara</label>
+            <input type="text" id="set-org-name" class="form-control" placeholder="PT Matchaji Roadshow Indonesia">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="set-admin-contact">Email Admin</label>
+            <input type="email" id="set-admin-contact" class="form-control" placeholder="admin@eventhub.id">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="set-admin-wa">WhatsApp Admin</label>
+            <div style="display:flex;gap:0.5rem;align-items:center;">
+              <input type="tel" id="set-admin-wa" class="form-control" placeholder="6281234567890" inputmode="tel">
+            </div>
+            <span class="form-hint">Format: 628xxx... (dengan kode negara, tanpa +)</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="set-payment-instructions">Instruksi Pembayaran Umum</label>
+          <textarea id="set-payment-instructions" class="form-control" rows="3"
+            placeholder="Cantumkan ID Registrasi sebagai berita/keterangan transfer. Proses verifikasi maks 1x24 jam kerja."></textarea>
+          <span class="form-hint">Ditampilkan di halaman tiket kepada semua peserta yang pending.</span>
+        </div>
+      </div>
+
+      <!-- ===== SECTION: BANK ACCOUNTS ===== -->
+      <div class="card mb-3">
+        <div class="flex items-center justify-between mb-2" style="flex-wrap:wrap;gap:0.75rem;">
+          <h3>🏦 Rekening Bank Tujuan</h3>
+          <button class="btn btn-primary btn-sm" onclick="addBankRow()">+ Tambah Rekening</button>
+        </div>
+        <p class="text-sm text-muted mb-2">Rekening yang aktif akan ditampilkan kepada peserta di halaman tiket mereka.</p>
+
+        <div id="bank-list" style="display:flex;flex-direction:column;gap:0.75rem;"></div>
+      </div>
+
+      <!-- ===== DANGER ZONE ===== -->
+      <div class="card mb-3" style="border-color:rgba(239,68,68,0.3);">
+        <h3 style="margin-bottom:1rem;color:var(--red);">⚠️ Zona Bahaya</h3>
+        <div class="grid-2">
+          <div>
+            <div class="font-semibold text-sm mb-1">Reset Semua Data</div>
+            <p class="text-sm text-muted mb-2">Hapus semua event dan pendaftar. Tidak dapat dibatalkan.</p>
+            <button class="btn btn-danger btn-sm" onclick="resetAllData()">🗑️ Hapus Semua Data</button>
+          </div>
+          <div>
+            <div class="font-semibold text-sm mb-1">Reset ke Data Demo</div>
+            <p class="text-sm text-muted mb-2">Kembalikan ke seed data awal (2 event demo).</p>
+            <button class="btn btn-amber btn-sm" onclick="resetToSeed()">🔄 Reset ke Demo</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SAVE BUTTON -->
+      <div style="position:sticky;bottom:calc(var(--bottom-nav-h) + 0.75rem);background:rgba(7,7,15,0.95);backdrop-filter:blur(20px);padding:1rem;margin:-1rem;border-top:1px solid var(--border);display:flex;gap:0.75rem;z-index:50;">
+        <button class="btn btn-primary btn-full btn-lg" onclick="saveSettings()">💾 Simpan Pengaturan</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <a class="bottom-nav-item" href="index.html"><span class="nav-icon">📊</span><span>Dashboard</span></a>
+  <a class="bottom-nav-item" href="events.html"><span class="nav-icon">📅</span><span>Event</span></a>
+  <a class="bottom-nav-item" href="registrants.html"><span class="nav-icon">👥</span><span>Peserta</span></a>
+  <a class="bottom-nav-item" href="checkin.html"><span class="nav-icon">📷</span><span>Check-in</span></a>
+</nav>
+
+<div id="toast-container"></div>
+<script src="../js/app.js"></script>
+<script src="../js/admin.js"></script>
+<script>
+  let bankRows = [];
+
+  function loadSettings() {
+    const s = DB.getSettings();
+    document.getElementById('set-org-name').value = s.organizerName || '';
+    document.getElementById('set-admin-contact').value = s.adminContact || '';
+    document.getElementById('set-admin-wa').value = s.adminWhatsapp || '';
+    document.getElementById('set-payment-instructions').value = s.paymentInstructions || '';
+    bankRows = s.banks ? [...s.banks] : [];
+    renderBankList();
+  }
+
+  function renderBankList() {
+    const container = document.getElementById('bank-list');
+    if (!bankRows.length) {
+      container.innerHTML = `<div class="empty-state" style="padding:1.5rem;"><div class="empty-icon">🏦</div><p>Belum ada rekening. Klik "+ Tambah Rekening".</p></div>`;
+      return;
+    }
+    container.innerHTML = bankRows.map((bank, i) => `
+      <div style="border:1px solid var(--border);border-radius:var(--radius-md);padding:1rem;background:rgba(255,255,255,0.02);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;flex-wrap:wrap;gap:0.5rem;">
+          <div class="flex items-center gap-1">
+            <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;font-size:0.85rem;font-weight:600;">
+              <input type="checkbox" ${bank.isActive ? 'checked' : ''} onchange="toggleBank(${i})" style="accent-color:var(--violet);width:16px;height:16px;">
+              Aktif (tampil ke peserta)
+            </label>
+          </div>
+          <button class="btn btn-danger btn-sm" onclick="removeBank(${i})">🗑️ Hapus</button>
+        </div>
+        <div class="grid-2" style="gap:0.75rem;">
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label" style="font-size:0.78rem;">Nama Bank</label>
+            <select class="form-control" onchange="updateBank(${i}, 'bankName', this.value)">
+              ${['BCA','Mandiri','BNI','BRI','CIMB Niaga','Danamon','Permata','Jenius','GoPay','OVO','Dana','QRIS','Lainnya'].map(b =>
+                `<option value="${b}" ${bank.bankName === b ? 'selected' : ''}>${b}</option>`
+              ).join('')}
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label" style="font-size:0.78rem;">No. Rekening / No. HP</label>
+            <input type="text" class="form-control" value="${bank.accountNo || ''}"
+              placeholder="0123456789" inputmode="numeric"
+              onchange="updateBank(${i}, 'accountNo', this.value)">
+          </div>
+          <div class="form-group" style="margin-bottom:0;grid-column:1/-1;">
+            <label class="form-label" style="font-size:0.78rem;">Atas Nama</label>
+            <input type="text" class="form-control" value="${bank.accountName || ''}"
+              placeholder="Nama pemilik rekening"
+              onchange="updateBank(${i}, 'accountName', this.value)">
+          </div>
+        </div>
+      </div>`).join('');
+  }
+
+  function addBankRow() {
+    bankRows.push({ id: 'bank_' + Date.now(), bankName: 'BCA', accountNo: '', accountName: '', isActive: true });
+    renderBankList();
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+  }
+
+  function removeBank(i) {
+    if (!confirm('Hapus rekening bank ini?')) return;
+    bankRows.splice(i, 1);
+    renderBankList();
+  }
+
+  function toggleBank(i) { bankRows[i].isActive = !bankRows[i].isActive; }
+  function updateBank(i, field, value) { bankRows[i][field] = value; }
+
+  function saveSettings() {
+    // Sync live inputs
+    bankRows.forEach((bank, i) => {
+      const rows = document.querySelectorAll('#bank-list > div');
+      if (rows[i]) {
+        const inputs = rows[i].querySelectorAll('input[type="text"], input[type="tel"]');
+        if (inputs[0]) bank.accountNo = inputs[0].value.trim();
+        if (inputs[1]) bank.accountName = inputs[1].value.trim();
+        bank.isActive = rows[i].querySelector('input[type="checkbox"]')?.checked ?? bank.isActive;
+        const sel = rows[i].querySelector('select');
+        if (sel) bank.bankName = sel.value;
+      }
+    });
+
+    const settings = {
+      organizerName: document.getElementById('set-org-name').value.trim(),
+      adminContact: document.getElementById('set-admin-contact').value.trim(),
+      adminWhatsapp: document.getElementById('set-admin-wa').value.trim(),
+      paymentInstructions: document.getElementById('set-payment-instructions').value.trim(),
+      banks: bankRows,
+    };
+    DB.saveSettings(settings);
+    showToast('✅ Pengaturan berhasil disimpan!', 'success', 3000);
+  }
+
+  function resetAllData() {
+    if (!confirm('⚠️ PERHATIAN!\n\nIni akan menghapus SEMUA data event dan peserta secara permanen.\n\nLanjutkan?')) return;
+    if (!confirm('Yakin? Data tidak dapat dikembalikan!')) return;
+    localStorage.removeItem('evtreg_events');
+    localStorage.removeItem('evtreg_registrants');
+    showToast('Semua data telah dihapus', 'warning', 3000);
+    setTimeout(() => location.reload(), 1500);
+  }
+
+  function resetToSeed() {
+    if (!confirm('Reset ke data demo? Peserta yang ada akan tetap tersimpan.')) return;
+    localStorage.removeItem('evtreg_events');
+    DB.seed();
+    showToast('Data event direset ke demo', 'success');
+  }
+
+  loadSettings();
+</script>
+</body>
+</html>

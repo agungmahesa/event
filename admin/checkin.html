@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR Check-in — Matchaji Roadshow Admin</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+</head>
+<body>
+
+<div class="admin-layout">
+
+  <nav class="sidebar">
+    <div class="sidebar-logo" style="padding:0;">
+      <img src="../img/logo.png" alt="Matchaji" style="height:32px;">
+    </div>
+    <div class="sidebar-section-label">Menu</div>
+    <a class="sidebar-link" href="index.html" data-page="index.html"><span class="icon">📊</span> Dashboard</a>
+    <a class="sidebar-link" href="events.html" data-page="events.html"><span class="icon">📅</span> Kelola Event</a>
+    <a class="sidebar-link" href="registrants.html" data-page="registrants.html"><span class="icon">👥</span> Peserta</a>
+    <a class="sidebar-link active" href="checkin.html" data-page="checkin.html"><span class="icon">📷</span> QR Check-in</a>
+    <a class="sidebar-link" href="settings.html" data-page="settings.html"><span class="icon">⚙️</span> Pengaturan</a>
+    <div class="sidebar-section-label" style="margin-top:auto;">Lainnya</div>
+    <a class="sidebar-link" href="../index.html"><span class="icon">🌐</span> Lihat Website</a>
+    <a class="sidebar-link" href="../register.html"><span class="icon">📋</span> Form Registrasi</a>
+    <a class="sidebar-link" href="#" onclick="adminLogout(); return false;" style="color:var(--red);"><span class="icon">🚪</span> Logout</a>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="main-content">
+    <div class="page-header">
+      <div class="flex items-center justify-between flex-wrap gap-2">
+        <div>
+          <h1>📷 QR Code Check-in</h1>
+          <p class="text-sm text-muted">Scan QR Code peserta untuk konfirmasi kehadiran</p>
+        </div>
+        <!-- Quick stats -->
+        <div style="display:flex;gap:1rem;">
+          <div style="text-align:center;">
+            <div class="font-bold text-green" id="checkin-count-today" style="font-size:1.4rem;">0</div>
+            <div class="text-xs text-muted">Check-in Session</div>
+          </div>
+          <div style="text-align:center;">
+            <div class="font-bold text-violet" id="checkin-total" style="font-size:1.4rem;">0</div>
+            <div class="text-xs text-muted">Total Semua</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;" id="checkin-grid">
+
+        <!-- LEFT: Scanner -->
+        <div style="display:flex;flex-direction:column;gap:1.5rem;">
+
+          <!-- Scanner Box -->
+          <div class="card" style="padding:0;overflow:hidden;">
+            <div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+              <h4 style="margin:0;">Kamera Scanner</h4>
+              <div style="display:flex;gap:0.5rem;">
+                <button class="btn btn-primary btn-sm" id="btn-start-scan">▶ Mulai Scan</button>
+                <button class="btn btn-danger btn-sm hidden" id="btn-stop-scan">⏹ Stop</button>
+              </div>
+            </div>
+            <div style="padding:1rem;">
+              <div id="qr-reader" style="width:100%;"></div>
+              <div style="margin-top:0.75rem;padding:0.75rem;background:rgba(255,255,255,0.03);border-radius:var(--radius-sm);font-size:0.8rem;color:var(--text-muted);">
+                💡 Pastikan browser mengizinkan akses kamera. Arahkan kamera ke QR Code peserta.
+              </div>
+            </div>
+          </div>
+
+          <!-- Manual Input Fallback -->
+          <div class="card">
+            <h4 style="margin-bottom:1rem;">⌨️ Input Manual</h4>
+            <p class="text-sm text-muted mb-2">Jika kamera tidak tersedia, masukkan ID tiket atau kode QR secara manual.</p>
+            <form id="manual-checkin-form">
+              <div style="display:flex;gap:0.75rem;">
+                <input type="text" id="manual-code-input" class="form-control" placeholder="REG-XXXXXXX atau kode QR" style="flex:1;" autocomplete="off">
+                <button type="submit" class="btn btn-primary">Check-in</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Filter by Event -->
+          <div class="card">
+            <h4 style="margin-bottom:0.75rem;">🎯 Filter Event</h4>
+            <select class="form-control" id="checkin-event-filter" onchange="updateCheckinStats()">
+              <option value="">Semua Event</option>
+            </select>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1rem;">
+              <span class="text-sm text-muted" id="filter-stats">—</span>
+              <button class="btn btn-ghost btn-sm" onclick="exportCSV(document.getElementById('checkin-event-filter').value)">⬇️ Export CSV</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: Result + Log -->
+        <div style="display:flex;flex-direction:column;gap:1.5rem;">
+
+          <!-- Check-in Result -->
+          <div>
+            <h4 style="margin-bottom:0.75rem;">📋 Hasil Scan Terakhir</h4>
+            <div id="checkin-result-area">
+              <div style="text-align:center;padding:3rem;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-xl);color:var(--text-muted);">
+                <div style="font-size:3rem;margin-bottom:0.5rem;">📷</div>
+                <p class="text-sm">Mulai scan untuk melihat hasil check-in</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Scan Log -->
+          <div class="card" style="padding:0;overflow:hidden;flex:1;">
+            <div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+              <h4 style="margin:0;">📜 Log Aktivitas</h4>
+              <button class="btn btn-ghost btn-sm" onclick="clearLog()">🗑️ Clear</button>
+            </div>
+            <div id="scan-log" style="max-height:450px;overflow-y:auto;"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+<script src="../js/app.js"></script>
+<script src="../js/admin.js"></script>
+<script>
+  let sessionCheckinCount = 0;
+
+  function updateCheckinStats() {
+    const eventId = document.getElementById('checkin-event-filter').value;
+    const regs = eventId ? DB.getRegistrantsByEvent(eventId) : DB.getRegistrants();
+    const checked = regs.filter(r => r.checkedIn).length;
+    document.getElementById('checkin-total').textContent = checked;
+    document.getElementById('filter-stats').textContent = `${checked} / ${regs.length} peserta check-in`;
+  }
+
+  function clearLog() {
+    scanLog.length = 0;
+    sessionCheckinCount = 0;
+    document.getElementById('checkin-count-today').textContent = '0';
+    renderScanLog();
+  }
+
+  // Override addScanLog to update session count
+  const _origAddScanLog = addScanLog;
+  // Patch processCheckin to count session
+  const _origProcessCheckin = processCheckin;
+  window.processCheckin = function(code) {
+    _origProcessCheckin(code);
+    const regs = DB.getRegistrants();
+    const checked = regs.filter(r => r.checkedIn).length;
+    document.getElementById('checkin-total').textContent = checked;
+  };
+
+  // Populate filter
+  function populateEventFilter() {
+    const select = document.getElementById('checkin-event-filter');
+    DB.getEvents().forEach(ev => {
+      const opt = document.createElement('option');
+      opt.value = ev.id;
+      opt.textContent = ev.name;
+      select.appendChild(opt);
+    });
+  }
+
+  // Track session check-ins
+  const origAddScanLog2 = addScanLog;
+  window.afterCheckin = function(status) {
+    if (status === 'success') {
+      sessionCheckinCount++;
+      document.getElementById('checkin-count-today').textContent = sessionCheckinCount;
+    }
+  };
+
+  initSidebar();
+  initCheckin();
+  populateEventFilter();
+  updateCheckinStats();
+</script>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <a class="bottom-nav-item" href="index.html"><span class="nav-icon">📊</span><span>Dashboard</span></a>
+  <a class="bottom-nav-item" href="events.html"><span class="nav-icon">📅</span><span>Event</span></a>
+  <a class="bottom-nav-item" href="registrants.html"><span class="nav-icon">👥</span><span>Peserta</span></a>
+  <a class="bottom-nav-item active" href="checkin.html"><span class="nav-icon">📷</span><span>Check-in</span></a>
+</nav>
+
+</body>
+</html>

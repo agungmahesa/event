@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kelola Event — Matchaji Roadshow Admin</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<div class="admin-layout">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-logo" style="padding:0;">
+      <img src="../img/logo.png" alt="Matchaji" style="height:32px;">
+    </div>
+    <div class="sidebar-section-label">Menu</div>
+    <a class="sidebar-link" href="index.html" data-page="index.html"><span class="icon">📊</span> Dashboard</a>
+    <a class="sidebar-link active" href="events.html" data-page="events.html"><span class="icon">📅</span> Kelola Event</a>
+    <a class="sidebar-link" href="registrants.html" data-page="registrants.html"><span class="icon">👥</span> Peserta</a>
+    <a class="sidebar-link" href="checkin.html" data-page="checkin.html"><span class="icon">📷</span> QR Check-in</a>
+    <a class="sidebar-link" href="settings.html" data-page="settings.html"><span class="icon">⚙️</span> Pengaturan</a>
+    <div class="sidebar-section-label" style="margin-top:auto;">Lainnya</div>
+    <a class="sidebar-link" href="../index.html"><span class="icon">🌐</span> Lihat Website</a>
+    <a class="sidebar-link" href="../register.html"><span class="icon">📋</span> Form Registrasi</a>
+    <a class="sidebar-link" href="#" onclick="adminLogout(); return false;" style="color:var(--red);"><span class="icon">🚪</span> Logout</a>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="main-content">
+    <div class="page-header">
+      <div class="flex items-center justify-between flex-wrap gap-2">
+        <div>
+          <h1>Kelola Event</h1>
+          <p class="text-sm text-muted">Tambah, edit event, atur S&K, dan kelola galeri foto</p>
+        </div>
+        <button class="btn btn-primary" id="btn-new-event">+ Tambah Event</button>
+      </div>
+    </div>
+
+    <div class="page-body">
+      <div id="events-list" style="display:flex;flex-direction:column;gap:1rem;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODAL EVENT ===================== -->
+<div class="modal-overlay" id="event-modal-overlay">
+  <div class="modal" style="max-width:780px;">
+    <div class="modal-header">
+      <h3 id="modal-event-title">Tambah Event Baru</h3>
+      <button class="modal-close" id="btn-close-event-modal">✕</button>
+    </div>
+
+    <!-- TABS -->
+    <div style="display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:1.5rem;">
+      <button class="modal-tab active" onclick="switchTab('tab-info', this)" style="padding:0.6rem 1.2rem;background:none;border:none;border-bottom:2px solid var(--violet);color:var(--violet-light);font-weight:600;font-size:0.85rem;cursor:pointer;">📋 Info Event</button>
+      <button class="modal-tab" onclick="switchTab('tab-tickets', this)" style="padding:0.6rem 1.2rem;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-muted);font-weight:600;font-size:0.85rem;cursor:pointer;">🎟️ Tiket</button>
+      <button class="modal-tab" onclick="switchTab('tab-terms', this)" style="padding:0.6rem 1.2rem;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-muted);font-weight:600;font-size:0.85rem;cursor:pointer;">📄 S&K</button>
+      <button class="modal-tab" onclick="switchTab('tab-gallery', this)" style="padding:0.6rem 1.2rem;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-muted);font-weight:600;font-size:0.85rem;cursor:pointer;">🖼️ Galeri</button>
+    </div>
+
+    <!-- TAB: Info -->
+    <div id="tab-info">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div class="form-group" style="grid-column:1/-1;">
+          <label class="form-label" for="ev-name">Nama Event <span>*</span></label>
+          <input type="text" id="ev-name" class="form-control" placeholder="Judul event atau workshop">
+        </div>
+        <div class="form-group" style="grid-column:1/-1;">
+          <label class="form-label" for="ev-description">Deskripsi Singkat</label>
+          <textarea id="ev-description" class="form-control" rows="3" placeholder="Deskripsi singkat tentang event..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="ev-date">Tanggal <span>*</span></label>
+          <input type="date" id="ev-date" class="form-control">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="ev-category">Kategori</label>
+          <select id="ev-category" class="form-control">
+            <option value="Workshop">Workshop</option>
+            <option value="Conference">Conference</option>
+            <option value="Seminar">Seminar</option>
+            <option value="Webinar">Webinar</option>
+            <option value="Meetup">Meetup</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="ev-time">Jam Mulai</label>
+          <input type="time" id="ev-time" class="form-control" value="09:00">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="ev-end-time">Jam Selesai</label>
+          <input type="time" id="ev-end-time" class="form-control" value="17:00">
+        </div>
+        <div class="form-group" style="grid-column:1/-1;">
+          <label class="form-label" for="ev-location">Lokasi <span>*</span></label>
+          <input type="text" id="ev-location" class="form-control" placeholder="Nama gedung, jalan, kota">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="ev-organizer">Penyelenggara</label>
+          <input type="text" id="ev-organizer" class="form-control" placeholder="Nama organisasi">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="ev-capacity">Kapasitas Total</label>
+          <input type="number" id="ev-capacity" class="form-control" value="100" min="1">
+        </div>
+        <div class="form-group" style="grid-column:1/-1;">
+          <label class="form-label" for="ev-status">Status Event</label>
+          <select id="ev-status" class="form-control">
+            <option value="active">Aktif (tampil di website)</option>
+            <option value="draft">Draft (tersembunyi)</option>
+            <option value="closed">Ditutup (pendaftaran ditutup)</option>
+          </select>
+        </div>
+        <div class="form-group" style="grid-column:1/-1;">
+          <label class="form-label" for="ev-payment-info">Info Pembayaran</label>
+          <textarea id="ev-payment-info" class="form-control" rows="3" placeholder="Mis: Transfer ke BCA 1234567890 a/n PT Matchaji Roadshow. Cantumkan ID Registrasi sebagai keterangan."></textarea>
+          <span class="form-hint">Ditampilkan kepada peserta setelah mendaftar sebagai panduan pembayaran.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: Tiket -->
+    <div id="tab-tickets" class="hidden">
+      <div style="margin-bottom:0.75rem;">
+        <p class="text-sm text-muted">Edit konfigurasi tiket dalam format JSON. Setiap tiket memiliki: <code style="color:var(--cyan-light);">id</code>, <code style="color:var(--cyan-light);">name</code>, <code style="color:var(--cyan-light);">price</code> (angka, 0 = gratis), <code style="color:var(--cyan-light);">quota</code>.</p>
+      </div>
+      <textarea id="ev-tickets-json" class="form-control" rows="10" style="font-family:monospace;font-size:0.8rem;"></textarea>
+      <div class="mt-2">
+        <button class="btn btn-ghost btn-sm" onclick="addTicketRow()">+ Tambah Tiket</button>
+        <button class="btn btn-ghost btn-sm" onclick="validateTicketsJSON()">✅ Validasi JSON</button>
+      </div>
+    </div>
+
+    <!-- TAB: S&K -->
+    <div id="tab-terms" class="hidden">
+      <p class="text-sm text-muted mb-2">Tuliskan Syarat & Ketentuan event ini. Peserta harus menyetujuinya sebelum mendaftar.</p>
+      <div class="richtext-toolbar">
+        <button data-cmd="bold" title="Bold"><strong>B</strong></button>
+        <button data-cmd="italic" title="Italic"><em>I</em></button>
+        <button data-cmd="underline" title="Underline"><u>U</u></button>
+        <button data-cmd="formatBlock" data-val="h3" title="Heading">H3</button>
+        <button data-cmd="formatBlock" data-val="h4" title="SubHeading">H4</button>
+        <button data-cmd="formatBlock" data-val="p" title="Paragraph">¶</button>
+        <button data-cmd="insertUnorderedList" title="Bullet List">• List</button>
+        <button data-cmd="insertOrderedList" title="Numbered List">1. List</button>
+        <button data-cmd="removeFormat" title="Clear Format">✕ Format</button>
+      </div>
+      <div id="terms-editor" class="richtext-editor" contenteditable="true"></div>
+      <div class="mt-1">
+        <button class="btn btn-ghost btn-sm" onclick="clearTerms()">🗑️ Kosongkan</button>
+        <button class="btn btn-ghost btn-sm" onclick="insertTermsTemplate()">📄 Gunakan Template</button>
+      </div>
+    </div>
+
+    <!-- TAB: Galeri -->
+    <div id="tab-gallery" class="hidden">
+      <p class="text-sm text-muted mb-2">Upload foto event. Foto pertama akan menjadi thumbnail di halaman event. Maks. 20 foto.</p>
+
+      <label class="upload-zone" for="gallery-upload-input" id="gallery-upload-zone">
+        <input type="file" id="gallery-upload-input" multiple accept="image/*">
+        <div class="upload-icon">📷</div>
+        <div class="font-semibold mb-1">Klik atau drag foto ke sini</div>
+        <div class="text-sm text-muted">JPG, PNG, WEBP · Maks 5MB per foto</div>
+      </label>
+
+      <div id="gallery-preview" class="mt-2"></div>
+    </div>
+
+    <!-- FOOTER MODAL -->
+    <div style="display:flex;justify-content:flex-end;gap:0.75rem;margin-top:2rem;padding-top:1rem;border-top:1px solid var(--border);">
+      <button class="btn btn-ghost" id="btn-cancel-modal" onclick="closeEventModal()">Batal</button>
+      <button class="btn btn-primary" id="btn-save-event">💾 Simpan Event</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+<script src="../js/app.js"></script>
+<script src="../js/admin.js"></script>
+<script>
+  function switchTab(tabId, btn) {
+    document.querySelectorAll('.modal .modal > div[id^="tab-"]').forEach(() => {});
+    ['tab-info','tab-tickets','tab-terms','tab-gallery'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.classList.add('hidden');
+    });
+    document.getElementById(tabId)?.classList.remove('hidden');
+    document.querySelectorAll('.modal-tab').forEach(b => {
+      b.style.borderBottomColor = 'transparent';
+      b.style.color = 'var(--text-muted)';
+    });
+    btn.style.borderBottomColor = 'var(--violet)';
+    btn.style.color = 'var(--violet-light)';
+  }
+
+  function addTicketRow() {
+    try {
+      const ta = document.getElementById('ev-tickets-json');
+      const arr = JSON.parse(ta.value);
+      arr.push({ id: 'ticket_' + Date.now(), name: 'Tiket Baru', price: 0, quota: 50 });
+      ta.value = JSON.stringify(arr, null, 2);
+    } catch { showToast('JSON tidak valid, perbaiki dulu', 'error'); }
+  }
+
+  function validateTicketsJSON() {
+    try {
+      JSON.parse(document.getElementById('ev-tickets-json').value);
+      showToast('JSON valid ✅', 'success');
+    } catch(e) { showToast('JSON tidak valid: ' + e.message, 'error'); }
+  }
+
+  function clearTerms() {
+    if (confirm('Kosongkan S&K?')) document.getElementById('terms-editor').innerHTML = '';
+  }
+
+  function insertTermsTemplate() {
+    document.getElementById('terms-editor').innerHTML = `
+<h3>Syarat & Ketentuan Peserta</h3>
+<p>Dengan mendaftar ke event ini, peserta menyetujui ketentuan berikut:</p>
+<ol>
+  <li>Peserta wajib hadir tepat waktu. Pintu ditutup 15 menit setelah acara dimulai.</li>
+  <li>Tiket tidak dapat dipindahtangankan kepada orang lain.</li>
+  <li>Refund hanya dapat dilakukan paling lambat 3 hari sebelum acara.</li>
+  <li>Panitia berhak mendiskualifikasi peserta yang mengganggu jalannya acara.</li>
+  <li>Dokumentasi (foto/video) dapat digunakan untuk kebutuhan publikasi penyelenggara.</li>
+  <li>Peserta bertanggung jawab atas barang bawaan masing-masing.</li>
+</ol>
+<h4>Kebijakan Privasi</h4>
+<p>Data pribadi peserta hanya digunakan untuk keperluan penyelenggaraan event dan tidak akan disebarkan kepada pihak ketiga.</p>`;
+    showToast('Template S&K berhasil diisi', 'success');
+  }
+
+  // Drag & drop upload zone
+  const uploadZone = document.getElementById('gallery-upload-zone');
+  if (uploadZone) {
+    uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragging'); });
+    uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragging'));
+    uploadZone.addEventListener('drop', e => {
+      e.preventDefault(); uploadZone.classList.remove('dragging');
+      const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+      if (files.length) {
+        const input = document.getElementById('gallery-upload-input');
+        const dt = new DataTransfer();
+        files.forEach(f => dt.items.add(f));
+        input.files = dt.files;
+        input.dispatchEvent(new Event('change'));
+      }
+    });
+  }
+
+  initSidebar();
+  initEventManager();
+</script>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <a class="bottom-nav-item" href="index.html"><span class="nav-icon">📊</span><span>Dashboard</span></a>
+  <a class="bottom-nav-item active" href="events.html"><span class="nav-icon">📅</span><span>Event</span></a>
+  <a class="bottom-nav-item" href="registrants.html"><span class="nav-icon">👥</span><span>Peserta</span></a>
+  <a class="bottom-nav-item" href="checkin.html"><span class="nav-icon">📷</span><span>Check-in</span></a>
+</nav>
+
+</body>
+</html>

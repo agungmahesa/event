@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Tiket Digital — Matchaji Roadshow</title>
+  <meta name="description" content="Tiket digital Anda dengan QR Code untuk check-in di lokasi event.">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="container">
+    <div class="navbar-inner">
+      <a class="navbar-brand" href="index.html">
+        <img src="img/logo.png" alt="Matchaji" style="height:32px;">
+      </a>
+      <div class="navbar-links">
+        <a href="index.html">Beranda</a>
+      </div>
+      <button class="hamburger" id="hamburger-btn" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</nav>
+<div class="mobile-drawer" id="mobile-drawer" onclick="closeMobileDrawer(event)">
+  <div class="mobile-drawer-panel">
+    <div style="font-size:1rem;font-weight:800;color:var(--violet-light);margin-bottom:1.5rem;">🍵 Matchaji Roadshow</div>
+    <a href="index.html" class="mobile-drawer-link">🏠 Beranda</a>
+  </div>
+</div>
+
+<div style="padding:1.5rem 0 5rem;">
+  <div class="container-sm">
+
+    <div id="not-found" class="empty-state hidden">
+      <div class="empty-icon">🔍</div>
+      <h3>Tiket Tidak Ditemukan</h3>
+      <p>ID tiket tidak valid atau pendaftaran tidak ditemukan.</p>
+      <a href="index.html" class="btn btn-primary btn-full mt-2">Kembali ke Beranda</a>
+    </div>
+
+    <div id="ticket-wrap-outer">
+
+      <!-- ===== PENDING STATE ===== -->
+      <div id="pending-state" class="hidden">
+        <div class="pending-banner">
+          <div class="pending-icon">⏳</div>
+          <h2 style="font-size:1.3rem;">Menunggu Validasi Pembayaran</h2>
+          <p style="color:var(--amber);font-size:0.875rem;margin-top:0.25rem;">Admin sedang memverifikasi pembayaran Anda</p>
+        </div>
+
+        <!-- Registrant info -->
+        <div class="card mb-2">
+          <div class="text-xs text-muted mb-1">Data Pendaftaran</div>
+          <div id="pending-details"></div>
+        </div>
+
+        <!-- Bank Account Info -->
+        <div id="payment-bank-info" class="hidden mb-2">
+          <h4 style="margin-bottom:0.75rem;color:var(--violet-light);">💳 Tujuan Pembayaran</h4>
+          <div id="bank-cards" style="display:flex;flex-direction:column;gap:0.75rem;"></div>
+        </div>
+
+        <!-- ===== UPLOAD BUKTI PEMBAYARAN ===== -->
+        <div class="card mb-2" style="border-color:rgba(124,58,237,0.3);background:rgba(124,58,237,0.05);">
+          <h4 style="margin-bottom:0.5rem;">📎 Upload Bukti Pembayaran</h4>
+          <p class="text-sm text-muted" style="margin-bottom:1rem;">Upload foto/screenshot bukti transfer agar admin dapat memverifikasi pembayaran Anda lebih cepat.</p>
+
+          <!-- Preview area (hidden default, shows after upload) -->
+          <div id="proof-preview" class="hidden" style="margin-bottom:1rem;">
+            <div style="position:relative;display:inline-block;max-width:100%;">
+              <img id="proof-img" src="" alt="Bukti Pembayaran"
+                style="max-width:100%;max-height:280px;border-radius:var(--radius-md);border:2px solid var(--green);cursor:pointer;"
+                onclick="openLightbox(this.src)">
+              <span style="position:absolute;top:6px;left:6px;background:var(--green);color:#fff;font-size:0.7rem;font-weight:700;padding:0.2rem 0.6rem;border-radius:999px;">✓ Terupload</span>
+            </div>
+            <div class="text-xs text-muted mt-1" id="proof-upload-time">—</div>
+          </div>
+
+          <!-- Upload zone -->
+          <div id="proof-upload-zone">
+            <label for="proof-upload-input" class="upload-zone" style="cursor:pointer;margin-bottom:0.75rem;">
+              <input type="file" id="proof-upload-input" accept="image/*" capture="environment" style="display:none;" onchange="handleProofUpload(event)">
+              <div class="upload-icon">📷</div>
+              <div class="font-semibold mb-1" style="font-size:0.9rem;">Klik atau tap untuk upload bukti</div>
+              <div class="text-xs text-muted">JPG, PNG · Maks 5MB · Bisa foto langsung dari kamera</div>
+            </label>
+            <button class="btn btn-primary btn-full" id="btn-upload-proof" disabled onclick="submitProof()">
+              ⬆️ Kirim Bukti Pembayaran
+            </button>
+          </div>
+        </div>
+        <!-- END UPLOAD -->
+
+        <!-- Steps -->
+        <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1.5rem;">
+          <h4 style="font-size:0.9rem;margin-bottom:0.75rem;">📋 Status Verifikasi</h4>
+          <div style="display:flex;flex-direction:column;gap:0.75rem;">
+            <div style="display:flex;align-items:flex-start;gap:0.75rem;">
+              <div style="width:28px;height:28px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;flex-shrink:0;color:#fff;">✓</div>
+              <div>
+                <div class="font-semibold text-sm">Formulir pendaftaran diterima</div>
+                <div id="step-reg-time" class="text-xs text-muted mt-1">—</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:0.75rem;" id="step-proof-row">
+              <div id="step-proof-circle" style="width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;flex-shrink:0;color:var(--text-muted);">2</div>
+              <div>
+                <div class="font-semibold text-sm">Bukti pembayaran dikirim</div>
+                <div id="step-proof-time" class="text-xs text-muted mt-1">Belum diupload</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:0.75rem;">
+              <div style="width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;flex-shrink:0;color:var(--text-muted);">3</div>
+              <div>
+                <div class="font-semibold text-sm">Validasi admin (maks. 1×24 jam kerja)</div>
+                <div class="text-xs text-muted mt-1">Menunggu</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:0.75rem;">
+              <div style="width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;flex-shrink:0;color:var(--text-muted);">4</div>
+              <div>
+                <div class="font-semibold text-sm">Tiket QR Code aktif 🎉</div>
+                <div class="text-xs text-muted mt-1">Menunggu validasi</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- QR locked -->
+        <div class="card mb-2" style="text-align:center;padding:2rem 1rem;">
+          <div class="qr-locked" style="margin:0 auto;">
+            <div class="lock-icon">🔒</div>
+            <div>QR Code akan aktif setelah pembayaran divalidasi</div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:0.75rem;flex-direction:column;">
+          <button class="btn btn-ghost btn-full" onclick="location.reload()">🔄 Refresh Status</button>
+          <a href="index.html" class="btn btn-ghost btn-full">← Beranda</a>
+        </div>
+      </div>
+
+      <!-- ===== REJECTED STATE ===== -->
+      <div id="rejected-state" class="hidden">
+        <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);border-radius:var(--radius-xl);padding:2rem;text-align:center;margin-bottom:1.5rem;">
+          <div style="font-size:3rem;margin-bottom:0.75rem;">❌</div>
+          <h2 style="color:var(--red);font-size:1.2rem;margin-bottom:0.5rem;">Pembayaran Ditolak</h2>
+          <p id="rejection-reason" class="text-sm text-muted"></p>
+        </div>
+        <div style="display:flex;gap:0.75rem;flex-direction:column;">
+          <a href="index.html" class="btn btn-primary btn-full">Daftar Ulang</a>
+          <a href="index.html" class="btn btn-ghost btn-full">← Beranda</a>
+        </div>
+      </div>
+
+      <!-- ===== CONFIRMED TICKET ===== -->
+      <div id="confirmed-state" class="hidden">
+        <div style="text-align:center;margin-bottom:1.5rem;">
+          <div class="hero-tag" style="display:inline-flex;margin:0 auto 0.75rem;">🎉 Tiket Aktif</div>
+          <p class="text-sm text-muted">Tunjukkan QR Code ini kepada panitia saat check-in di lokasi.</p>
+        </div>
+
+        <div class="ticket-wrap" id="ticket-card-download">
+          <div class="ticket-header">
+            <div>
+              <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;opacity:0.8;">Matchaji Roadshow · Tiket Digital</div>
+              <div style="font-size:1rem;font-weight:800;margin-top:0.2rem;line-height:1.3;" id="t-event-name">—</div>
+            </div>
+            <div style="font-size:1.75rem;">🍵</div>
+          </div>
+          <div class="ticket-body">
+            <div class="grid-2" style="gap:0.75rem;">
+              <div class="ticket-field">
+                <label>Nama Peserta</label>
+                <p id="t-name">—</p>
+              </div>
+              <div class="ticket-field">
+                <label>Jenis Tiket</label>
+                <p id="t-ticket-type">—</p>
+              </div>
+              <div class="ticket-field">
+                <label>Tanggal</label>
+                <p id="t-date" style="font-size:0.82rem;">—</p>
+              </div>
+              <div class="ticket-field">
+                <label>Waktu</label>
+                <p id="t-time">—</p>
+              </div>
+            </div>
+            <div class="ticket-field" style="margin-top:0.5rem;">
+              <label>Lokasi</label>
+              <p id="t-location" style="font-size:0.82rem;">—</p>
+            </div>
+            <div class="ticket-field">
+              <label>No. Registrasi</label>
+              <p id="t-id" style="font-family:monospace;font-size:0.82rem;color:var(--violet-light);">—</p>
+            </div>
+            <hr class="ticket-divider">
+            <div class="ticket-qr">
+              <div id="qr-container" style="background:#fff;padding:10px;border-radius:12px;"></div>
+              <div id="t-status" class="ticket-status approved">✅ Tiket Aktif</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:0.75rem;flex-direction:column;margin-top:1.5rem;">
+          <button class="btn btn-primary btn-full btn-lg" onclick="shareTicket()">📤 Bagikan / Simpan Tiket</button>
+          <a href="index.html" class="btn btn-ghost btn-full">← Beranda</a>
+        </div>
+
+        <div id="event-gallery-section" class="mt-3 hidden">
+          <h3 style="margin-bottom:1rem;">📸 Galeri Event</h3>
+          <div class="gallery-grid" id="event-gallery-grid"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Lightbox -->
+<div id="lightbox" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.95);align-items:center;justify-content:center;padding:1rem;flex-direction:column;gap:1rem;" onclick="closeLightbox()">
+  <img id="lightbox-img" src="" style="max-width:100%;max-height:85vh;border-radius:8px;object-fit:contain;">
+  <span class="text-xs text-muted">Tap untuk tutup</span>
+</div>
+
+<div id="toast-container"></div>
+<script src="js/app.js"></script>
+<script>
+  let currentRegId = null;
+  let proofBase64 = null;
+
+  document.getElementById('hamburger-btn')?.addEventListener('click', () => {
+    document.getElementById('mobile-drawer').classList.add('open');
+  });
+  function closeMobileDrawer(e) {
+    if (e.target.id === 'mobile-drawer') document.getElementById('mobile-drawer').classList.remove('open');
+  }
+  function openLightbox(src) { document.getElementById('lightbox-img').src = src; document.getElementById('lightbox').style.display = 'flex'; }
+  function closeLightbox() { document.getElementById('lightbox').style.display = 'none'; }
+
+  function showState(state) {
+    ['pending-state','rejected-state','confirmed-state'].forEach(id => document.getElementById(id).classList.add('hidden'));
+    document.getElementById(state)?.classList.remove('hidden');
+  }
+
+  function handleProofUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { showToast('Ukuran file maks 5MB', 'error'); return; }
+    const reader = new FileReader();
+    reader.onload = ev => {
+      proofBase64 = ev.target.result;
+      document.getElementById('proof-img').src = proofBase64;
+      document.getElementById('proof-preview').classList.remove('hidden');
+      document.getElementById('btn-upload-proof').disabled = false;
+      showToast('Foto siap dikirim — klik "Kirim Bukti"', 'info');
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  }
+
+  function submitProof() {
+    if (!proofBase64 || !currentRegId) return;
+    const btn = document.getElementById('btn-upload-proof');
+    btn.disabled = true; btn.textContent = '⏳ Mengirim...';
+    setTimeout(() => {
+      const reg = DB.uploadPaymentProof(currentRegId, proofBase64);
+      if (reg) {
+        document.getElementById('proof-upload-time').textContent = 'Dikirim: ' + new Date().toLocaleString('id-ID');
+        document.getElementById('proof-upload-zone').innerHTML = `
+          <div style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:var(--radius-sm);padding:0.75rem;text-align:center;">
+            <div style="font-size:1.3rem;margin-bottom:0.25rem;">✅</div>
+            <div class="font-semibold text-sm text-green">Bukti pembayaran berhasil dikirim!</div>
+            <div class="text-xs text-muted mt-1">Admin akan segera memverifikasi dalam 1×24 jam</div>
+          </div>`;
+
+        // Update step indicator
+        const circle = document.getElementById('step-proof-circle');
+        if (circle) { circle.style.background = 'var(--green)'; circle.style.color = '#fff'; circle.textContent = '✓'; }
+        document.getElementById('step-proof-time').textContent = 'Dikirim: ' + new Date().toLocaleString('id-ID');
+        showToast('Bukti pembayaran berhasil dikirim! Menunggu validasi admin.', 'success', 5000);
+      }
+    }, 1000);
+  }
+
+  function renderBankInfo(event) {
+    const settings = DB.getSettings();
+    const banks = settings.banks?.filter(b => b.isActive) || [];
+    // Also check event-specific payment info
+    const eventPayInfo = event?.paymentInfo || '';
+
+    if (!banks.length && !eventPayInfo) return;
+
+    document.getElementById('payment-bank-info').classList.remove('hidden');
+    const bankCards = document.getElementById('bank-cards');
+
+    let html = '';
+    if (banks.length) {
+      html += banks.map(b => `
+        <div style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:var(--radius-md);padding:1rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;">
+          <div>
+            <div class="badge badge-violet" style="margin-bottom:0.4rem;">${b.bankName}</div>
+            <div class="font-bold" style="font-size:1.1rem;letter-spacing:0.05em;">${b.accountNo}</div>
+            <div class="text-sm text-muted">${b.accountName}</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="copyText('${b.accountNo}')">📋 Salin</button>
+        </div>`).join('');
+    }
+    if (eventPayInfo) {
+      html += `<div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.75rem;font-size:0.82rem;color:var(--text-secondary);">${eventPayInfo}</div>`;
+    }
+    if (settings.paymentInstructions) {
+      html += `<div class="text-xs text-muted" style="padding:0.5rem 0;">📝 ${settings.paymentInstructions}</div>`;
+    }
+    bankCards.innerHTML = html;
+  }
+
+  function copyText(text) {
+    navigator.clipboard.writeText(text).then(() => showToast('Nomor rekening disalin!', 'success')).catch(() => showToast('Gagal menyalin', 'error'));
+  }
+
+  function init() {
+    const regId = getUrlParam('id');
+    currentRegId = regId;
+    if (!regId) { document.getElementById('not-found').classList.remove('hidden'); document.getElementById('ticket-wrap-outer').classList.add('hidden'); return; }
+
+    const reg = DB.getRegistrant(regId);
+    if (!reg) { document.getElementById('not-found').classList.remove('hidden'); document.getElementById('ticket-wrap-outer').classList.add('hidden'); return; }
+
+    const ev = DB.getEvent(reg.eventId);
+    document.title = `Tiket ${reg.name} — Matchaji Roadshow`;
+
+    const status = reg.paymentStatus;
+
+    if (status === 'pending') {
+      showState('pending-state');
+
+      // Fill details
+      const rows = [
+        ['Nama', reg.name], ['Email', reg.email],
+        ['Event', ev ? ev.name : '-'], ['Tiket', reg.ticketType],
+        ['Total', reg.ticketPrice === 0 ? 'GRATIS' : formatCurrency(reg.ticketPrice)],
+        ['Metode Bayar', reg.paymentMethod || '-'],
+        ['ID Registrasi', reg.id],
+      ];
+      document.getElementById('pending-details').innerHTML = rows.map(([k,v]) => `
+        <div style="display:flex;justify-content:space-between;gap:0.5rem;font-size:0.82rem;padding:0.35rem 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <span class="text-muted" style="flex-shrink:0;">${k}</span>
+          <strong style="text-align:right;word-break:break-word;color:var(--text-primary);max-width:65%;">${v}</strong>
+        </div>`).join('');
+
+      // Step 1 time
+      document.getElementById('step-reg-time').textContent = formatDateTime(reg.registeredAt);
+
+      // Show existing proof if uploaded
+      if (reg.paymentProof) {
+        document.getElementById('proof-img').src = reg.paymentProof;
+        document.getElementById('proof-preview').classList.remove('hidden');
+        document.getElementById('proof-upload-time').textContent = 'Dikirim: ' + formatDateTime(reg.paymentProofAt);
+        document.getElementById('proof-upload-zone').innerHTML = `
+          <div style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:var(--radius-sm);padding:0.75rem;text-align:center;">
+            <div class="font-semibold text-sm text-green">✅ Bukti sudah dikirim — menunggu validasi admin</div>
+            <button class="btn btn-ghost btn-sm mt-1" onclick="document.getElementById('proof-upload-input').click()">🔄 Ganti Bukti</button>
+            <input type="file" id="proof-upload-input" accept="image/*" capture="environment" style="display:none;" onchange="handleProofUpload(event)">
+          </div>`;
+        const circle = document.getElementById('step-proof-circle');
+        if (circle) { circle.style.background = 'var(--green)'; circle.style.color = '#fff'; circle.textContent = '✓'; }
+        document.getElementById('step-proof-time').textContent = 'Dikirim: ' + formatDateTime(reg.paymentProofAt);
+      }
+
+      // Bank info
+      renderBankInfo(ev);
+    }
+    else if (status === 'rejected') {
+      showState('rejected-state');
+      document.getElementById('rejection-reason').textContent = reg.rejectionReason ? `Alasan: ${reg.rejectionReason}` : 'Silakan hubungi panitia untuk informasi lebih lanjut.';
+    }
+    else {
+      // approved or free
+      showState('confirmed-state');
+      document.getElementById('t-name').textContent = reg.name;
+      document.getElementById('t-ticket-type').textContent = reg.ticketType;
+      document.getElementById('t-event-name').textContent = ev ? ev.name : 'Event';
+      document.getElementById('t-date').textContent = ev ? formatDate(ev.date) : '-';
+      document.getElementById('t-time').textContent = ev ? `${ev.time} – ${ev.endTime}` : '-';
+      document.getElementById('t-location').textContent = ev ? ev.location : '-';
+      document.getElementById('t-id').textContent = reg.id;
+
+      const statusEl = document.getElementById('t-status');
+      if (reg.checkedIn) {
+        statusEl.className = 'ticket-status approved';
+        statusEl.textContent = `✅ Check-in: ${formatDateTime(reg.checkedInAt)}`;
+      }
+
+      new QRCode(document.getElementById('qr-container'), {
+        text: reg.qrCode, width: 180, height: 180,
+        colorDark: '#000', colorLight: '#fff', correctLevel: QRCode.CorrectLevel.H
+      });
+
+      if (ev?.gallery?.length) {
+        document.getElementById('event-gallery-section').classList.remove('hidden');
+        document.getElementById('event-gallery-grid').innerHTML = ev.gallery.map(src =>
+          `<div class="gallery-thumb" onclick="openLightbox('${src}')"><img src="${src}" alt="foto event"></div>`
+        ).join('');
+      }
+    }
+  }
+
+  async function shareTicket() {
+    const url = window.location.href;
+    if (navigator.share) {
+      try { await navigator.share({ title: 'Tiket Matchaji Roadshow', text: 'Tiket digital saya untuk event ini.', url }); } catch {}
+    } else {
+      await navigator.clipboard.writeText(url).catch(() => {});
+      showToast('Link tiket disalin ke clipboard', 'success');
+    }
+  }
+
+  init();
+</script>
+</body>
+</html>
