@@ -3,44 +3,44 @@
 // ================================================================
 
 // ---- AUTH & SECURITY CHECK ----
-// Always make body visible as failsafe after short timeout
-// (prevents permanent blank page if auth check throws)
-const _authTimeout = setTimeout(() => {
-  document.body.style.visibility = 'visible';
-}, 3000);
-
+// Hide body to prevent flash before auth resolves
 if (!window.location.pathname.endsWith('login')) {
   document.body.style.visibility = 'hidden';
 }
 
-(async function checkAdminAuth() {
+// Failsafe: always show body after 5s to prevent permanent blank
+const _authTimeout = setTimeout(() => {
+  document.body.style.visibility = 'visible';
+}, 5000);
+
+(function checkAdminAuth() {
   if (window.location.pathname.endsWith('login')) {
     clearTimeout(_authTimeout);
     return;
   }
 
-  try {
-    if (!supabase || !supabase.auth) {
-      console.warn('Supabase not initialized, redirecting to login');
-      window.location.replace('/admin/login');
-      return;
-    }
-
-    const result = await supabase.auth.getSession();
-    const session = result?.data?.session;
-
-    if (!session) {
-      window.location.replace('/admin/login');
-    } else {
-      clearTimeout(_authTimeout);
-      document.body.style.visibility = 'visible';
-    }
-  } catch (err) {
-    console.error('Auth check error:', err);
-    // On error, show page anyway — don't leave user with blank screen
+  if (!supabase || !supabase.auth) {
     clearTimeout(_authTimeout);
-    document.body.style.visibility = 'visible';
+    window.location.replace('/admin/login');
+    return;
   }
+
+  // Use onAuthStateChange with INITIAL_SESSION — fires once with the
+  // definitive session state, even if restored from storage asynchronously.
+  let resolved = false;
+  const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    if (resolved) return;
+    if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+      resolved = true;
+      subscription.unsubscribe();
+      clearTimeout(_authTimeout);
+      if (!session) {
+        window.location.replace('/admin/login');
+      } else {
+        document.body.style.visibility = 'visible';
+      }
+    }
+  });
 })();
 
 async function adminLogout() {
