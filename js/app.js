@@ -83,7 +83,9 @@ const SEED_EVENTS = [
 // ---- SUPABASE CLIENT ----
 const supabaseUrl = 'https://vzdpvomzejaulahohyce.supabase.co';
 const supabaseKey = 'sb_publishable_osvY0dcqVEts9e4X3CclZA_Cr12kwJ1';
-const supabase = window.supabase ? window.supabase.createClient(supabaseUrl, supabaseKey) : null;
+// CDN via jsdelivr exposes global `supabase` with { createClient } inside
+const { createClient } = window.supabase;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 // ---- DB HELPERS ----
 const DB = {

@@ -56,7 +56,7 @@
 
     // Simulasi loading sebentar agar terasa interaktif
     setTimeout(() => {
-      if (u === 'Matcha.ji' && p === 'Travel101!') {
+      if (u.toLowerCase() === 'matcha.ji' && p === 'Travel101!') {
         localStorage.setItem('evtreg_admin_auth', 'true');
         showToast('Login berhasil!', 'success');
         setTimeout(() => window.location.replace('/admin'), 800);
