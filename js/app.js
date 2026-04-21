@@ -80,48 +80,65 @@ const SEED_EVENTS = [
   }
 ];
 
+// ---- SUPABASE CLIENT ----
+const supabaseUrl = 'https://vzdpvomzejaulahohyce.supabase.co';
+const supabaseKey = 'sb_publishable_osvY0dcqVEts9e4X3CclZA_Cr12kwJ1';
+const supabase = window.supabase ? window.supabase.createClient(supabaseUrl, supabaseKey) : null;
+
 // ---- DB HELPERS ----
 const DB = {
-  get(key) {
-    try { return JSON.parse(localStorage.getItem(key)) || []; }
-    catch { return []; }
-  },
-  set(key, data) {
-    localStorage.setItem(key, JSON.stringify(data));
-  },
-
   // Events
-  getEvents() { return this.get(DB_KEYS.EVENTS); },
-  getEvent(id) { return this.getEvents().find(e => e.id === id); },
-  saveEvent(event) {
-    const events = this.getEvents();
-    const idx = events.findIndex(e => e.id === event.id);
-    if (idx >= 0) events[idx] = event;
-    else events.push(event);
-    this.set(DB_KEYS.EVENTS, events);
+  async getEvents() {
+    const { data, error } = await supabase.from('events').select('*').order('date', { ascending: true });
+    if (error) console.error(error);
+    return data || [];
   },
-  deleteEvent(id) {
-    const events = this.getEvents().filter(e => e.id !== id);
-    this.set(DB_KEYS.EVENTS, events);
+  async getEvent(id) {
+    const { data, error } = await supabase.from('events').select('*').eq('id', id).single();
+    if (error) console.error(error);
+    return data || null;
+  },
+  async saveEvent(event) {
+    const { data, error } = await supabase.from('events').upsert(event).select();
+    if (error) console.error(error);
+    return data ? data[0] : null;
+  },
+  async deleteEvent(id) {
+    const { error } = await supabase.from('events').delete().eq('id', id);
+    if (error) console.error(error);
   },
 
   // Registrants
-  getRegistrants() { return this.get(DB_KEYS.REGISTRANTS); },
-  getRegistrantsByEvent(eventId) { return this.getRegistrants().filter(r => r.eventId === eventId); },
-  getRegistrant(id) { return this.getRegistrants().find(r => r.id === id); },
-  getRegistrantByQR(qrCode) { return this.getRegistrants().find(r => r.qrCode === qrCode); },
-  saveRegistrant(reg) {
-    const regs = this.getRegistrants();
-    const idx = regs.findIndex(r => r.id === reg.id);
-    if (idx >= 0) regs[idx] = reg;
-    else regs.push(reg);
-    this.set(DB_KEYS.REGISTRANTS, regs);
+  async getRegistrants() {
+    const { data, error } = await supabase.from('registrants').select('*').order('createdAt', { ascending: false });
+    if (error) console.error(error);
+    return data || [];
+  },
+  async getRegistrantsByEvent(eventId) {
+    const { data, error } = await supabase.from('registrants').select('*').eq('eventId', eventId);
+    if (error) console.error(error);
+    return data || [];
+  },
+  async getRegistrant(id) {
+    const { data, error } = await supabase.from('registrants').select('*').eq('id', id).single();
+    if (error) console.error(error);
+    return data || null;
+  },
+  async getRegistrantByQR(qrCode) {
+    const { data, error } = await supabase.from('registrants').select('*').eq('qrCode', qrCode).single();
+    if (error) console.error(error);
+    return data || null;
+  },
+  async saveRegistrant(reg) {
+    const { data, error } = await supabase.from('registrants').upsert(reg).select();
+    if (error) console.error(error);
+    return data ? data[0] : null;
   },
 
   // Stats
-  getStats() {
-    const events = this.getEvents();
-    const registrants = this.getRegistrants();
+  async getStats() {
+    const events = await this.getEvents();
+    const registrants = await this.getRegistrants();
     const checkedIn = registrants.filter(r => r.checkedIn).length;
     const pending = registrants.filter(r => r.paymentStatus === 'pending').length;
     const confirmed = registrants.filter(r => r.bookingStatus === 'confirmed').length;
@@ -129,61 +146,79 @@ const DB = {
       totalEvents: events.length,
       totalRegistrants: registrants.length,
       checkedIn,
-      notCheckedIn: confirmed - checkedIn,
+      notCheckedIn: Math.max(0, confirmed - checkedIn),
       pendingPayment: pending,
       confirmed,
     };
   },
 
   // Payment management
-  getPendingPayments() {
-    return this.getRegistrants().filter(r => r.paymentStatus === 'pending');
+  async getPendingPayments() {
+    const { data, error } = await supabase.from('registrants').select('*').eq('paymentStatus', 'pending');
+    if (error) console.error(error);
+    return data || [];
   },
-  approvePayment(regId) {
-    const reg = this.getRegistrant(regId);
+  async approvePayment(regId) {
+    const reg = await this.getRegistrant(regId);
     if (!reg) return null;
-    reg.paymentStatus = 'approved';
-    reg.bookingStatus = 'confirmed';
-    reg.approvedAt = new Date().toISOString();
-    this.saveRegistrant(reg);
-    return reg;
+    const updateData = {
+      id: regId,
+      paymentStatus: 'approved',
+      bookingStatus: 'confirmed',
+      approvedAt: new Date().toISOString()
+    };
+    return await this.saveRegistrant(updateData);
   },
-  rejectPayment(regId, reason = '') {
-    const reg = this.getRegistrant(regId);
+  async rejectPayment(regId, reason = '') {
+    const reg = await this.getRegistrant(regId);
     if (!reg) return null;
-    reg.paymentStatus = 'rejected';
-    reg.bookingStatus = 'cancelled';
-    reg.rejectedAt = new Date().toISOString();
-    reg.rejectionReason = reason;
-    this.saveRegistrant(reg);
-    return reg;
+    const updateData = {
+      id: regId,
+      paymentStatus: 'rejected',
+      bookingStatus: 'cancelled',
+      rejectedAt: new Date().toISOString(),
+      rejectionReason: reason
+    };
+    return await this.saveRegistrant(updateData);
   },
 
   // Settings
-  getSettings() {
-    try {
-      const saved = JSON.parse(localStorage.getItem(DB_KEYS.SETTINGS));
-      return saved ? { ...DEFAULT_SETTINGS, ...saved } : { ...DEFAULT_SETTINGS };
-    } catch { return { ...DEFAULT_SETTINGS }; }
+  async getSettings() {
+    const { data, error } = await supabase.from('settings').select('*').eq('id', 'global').single();
+    if (data) {
+      return { ...DEFAULT_SETTINGS, ...data };
+    }
+    return { ...DEFAULT_SETTINGS };
   },
-  saveSettings(settings) {
-    localStorage.setItem(DB_KEYS.SETTINGS, JSON.stringify(settings));
+  async saveSettings(settings) {
+    settings.id = 'global';
+    const { error } = await supabase.from('settings').upsert(settings);
+    if (error) console.error(error);
   },
 
   // Upload payment proof
-  uploadPaymentProof(regId, base64Image) {
-    const reg = this.getRegistrant(regId);
+  async uploadPaymentProof(regId, base64Image) {
+    const reg = await this.getRegistrant(regId);
     if (!reg) return null;
     reg.paymentProof = base64Image;
     reg.paymentProofAt = new Date().toISOString();
-    this.saveRegistrant(reg);
-    return reg;
+    return await this.saveRegistrant(reg);
   },
 
   // Seed
-  seed() {
-    if (this.getEvents().length === 0) {
-      this.set(DB_KEYS.EVENTS, SEED_EVENTS);
+  async seed() {
+    if (!supabase) return;
+    try {
+      const events = await this.getEvents();
+      if (events.length === 0) {
+        console.log("Seeding default events to Supabase...");
+        for (const ev of SEED_EVENTS) {
+          await this.saveEvent(ev);
+        }
+        console.log("Seeding complete.");
+      }
+    } catch (err) {
+      console.error("DB Seed error:", err);
     }
   }
 };
@@ -226,12 +261,14 @@ function setUrlParam(key, value) {
   window.history.replaceState({}, '', url);
 }
 
-function getRegistrantCount(eventId, ticketId) {
-  return DB.getRegistrantsByEvent(eventId).filter(r => r.ticketType === ticketId).length;
+async function getRegistrantCount(eventId, ticketId) {
+  const regs = await DB.getRegistrantsByEvent(eventId);
+  return regs.filter(r => r.ticketId === ticketId || r.ticketType === ticketId).length;
 }
 
-function getCheckinCount(eventId) {
-  return DB.getRegistrantsByEvent(eventId).filter(r => r.checkedIn).length;
+async function getCheckinCount(eventId) {
+  const regs = await DB.getRegistrantsByEvent(eventId);
+  return regs.filter(r => r.checkedIn).length;
 }
 
 // ---- TOAST ----
@@ -266,18 +303,18 @@ function getCategoryBadge(category) {
 }
 
 // ---- EXPORT CSV ----
-function exportCSV(eventId) {
-  const regs = eventId ? DB.getRegistrantsByEvent(eventId) : DB.getRegistrants();
+async function exportCSV(eventId) {
+  const regs = eventId ? await DB.getRegistrantsByEvent(eventId) : await DB.getRegistrants();
   if (!regs.length) { showToast('Tidak ada data untuk diekspor', 'warning'); return; }
 
   const headers = ['ID', 'Nama', 'Email', 'No. HP', 'Instansi', 'Event', 'Tipe Tiket', 'Tanggal Daftar', 'Status Check-in', 'Waktu Check-in'];
-  const events = DB.getEvents();
+  const events = await DB.getEvents();
   const rows = regs.map(r => {
     const ev = events.find(e => e.id === r.eventId);
     return [
-      r.id, r.name, r.email, r.phone, r.institution || '',
-      ev ? ev.name : r.eventId, r.ticketType,
-      formatDateTime(r.registeredAt),
+      r.id, r.fullName || r.name, r.email, r.phone, r.company || r.institution || '',
+      ev ? ev.name : r.eventId, r.ticketId || r.ticketType,
+      formatDateTime(r.createdAt || r.registeredAt),
       r.checkedIn ? 'Sudah Check-in' : 'Belum Check-in',
       r.checkedInAt ? formatDateTime(r.checkedInAt) : '-'
     ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(',');

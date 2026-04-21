@@ -14,13 +14,13 @@
       <img src="../img/logo.png" alt="Matchaji" style="height:32px;">
     </div>
     <div class="sidebar-section-label">Menu</div>
-    <a class="sidebar-link" href="index.html"><span class="icon">📊</span> Dashboard</a>
-    <a class="sidebar-link" href="events.html"><span class="icon">📅</span> Kelola Event</a>
-    <a class="sidebar-link" href="registrants.html"><span class="icon">👥</span> Peserta</a>
-    <a class="sidebar-link" href="checkin.html"><span class="icon">📷</span> QR Check-in</a>
-    <a class="sidebar-link active" href="settings.html"><span class="icon">⚙️</span> Pengaturan</a>
+    <a class="sidebar-link" href="/admin"><span class="icon">📊</span> Dashboard</a>
+    <a class="sidebar-link" href="/admin/events"><span class="icon">📅</span> Kelola Event</a>
+    <a class="sidebar-link" href="/admin/registrants"><span class="icon">👥</span> Peserta</a>
+    <a class="sidebar-link" href="/admin/checkin"><span class="icon">📷</span> QR Check-in</a>
+    <a class="sidebar-link active" href="/admin/settings"><span class="icon">⚙️</span> Pengaturan</a>
     <div class="sidebar-section-label" style="margin-top:auto;">Lainnya</div>
-    <a class="sidebar-link" href="../index.html"><span class="icon">🌐</span> Website</a>
+    <a class="sidebar-link" href="/"><span class="icon">🌐</span> Website</a>
     <a class="sidebar-link" href="#" onclick="adminLogout(); return false;" style="color:var(--red);"><span class="icon">🚪</span> Logout</a>
   </nav>
 
@@ -99,20 +99,21 @@
 
 <!-- BOTTOM NAV -->
 <nav class="bottom-nav">
-  <a class="bottom-nav-item" href="index.html"><span class="nav-icon">📊</span><span>Dashboard</span></a>
-  <a class="bottom-nav-item" href="events.html"><span class="nav-icon">📅</span><span>Event</span></a>
-  <a class="bottom-nav-item" href="registrants.html"><span class="nav-icon">👥</span><span>Peserta</span></a>
-  <a class="bottom-nav-item" href="checkin.html"><span class="nav-icon">📷</span><span>Check-in</span></a>
+  <a class="bottom-nav-item" href="/admin"><span class="nav-icon">📊</span><span>Dashboard</span></a>
+  <a class="bottom-nav-item" href="/admin/events"><span class="nav-icon">📅</span><span>Event</span></a>
+  <a class="bottom-nav-item" href="/admin/registrants"><span class="nav-icon">👥</span><span>Peserta</span></a>
+  <a class="bottom-nav-item" href="/admin/checkin"><span class="nav-icon">📷</span><span>Check-in</span></a>
 </nav>
 
 <div id="toast-container"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/app.js"></script>
 <script src="../js/admin.js"></script>
 <script>
   let bankRows = [];
 
-  function loadSettings() {
-    const s = DB.getSettings();
+  async function loadSettings() {
+    const s = await DB.getSettings();
     document.getElementById('set-org-name').value = s.organizerName || '';
     document.getElementById('set-admin-contact').value = s.adminContact || '';
     document.getElementById('set-admin-wa').value = s.adminWhatsapp || '';
@@ -178,7 +179,7 @@
   function toggleBank(i) { bankRows[i].isActive = !bankRows[i].isActive; }
   function updateBank(i, field, value) { bankRows[i][field] = value; }
 
-  function saveSettings() {
+  async function saveSettings() {
     // Sync live inputs
     bankRows.forEach((bank, i) => {
       const rows = document.querySelectorAll('#bank-list > div');
@@ -193,30 +194,23 @@
     });
 
     const settings = {
+      id: 'global',
       organizerName: document.getElementById('set-org-name').value.trim(),
       adminContact: document.getElementById('set-admin-contact').value.trim(),
       adminWhatsapp: document.getElementById('set-admin-wa').value.trim(),
       paymentInstructions: document.getElementById('set-payment-instructions').value.trim(),
       banks: bankRows,
     };
-    DB.saveSettings(settings);
+    await DB.saveSettings(settings);
     showToast('✅ Pengaturan berhasil disimpan!', 'success', 3000);
   }
 
   function resetAllData() {
-    if (!confirm('⚠️ PERHATIAN!\n\nIni akan menghapus SEMUA data event dan peserta secara permanen.\n\nLanjutkan?')) return;
-    if (!confirm('Yakin? Data tidak dapat dikembalikan!')) return;
-    localStorage.removeItem('evtreg_events');
-    localStorage.removeItem('evtreg_registrants');
-    showToast('Semua data telah dihapus', 'warning', 3000);
-    setTimeout(() => location.reload(), 1500);
+    showToast('Fitur reset dinonaktifkan pada DB Cloud (Supabase).', 'warning', 3000);
   }
 
   function resetToSeed() {
-    if (!confirm('Reset ke data demo? Peserta yang ada akan tetap tersimpan.')) return;
-    localStorage.removeItem('evtreg_events');
-    DB.seed();
-    showToast('Data event direset ke demo', 'success');
+    showToast('Fitur reset dinonaktifkan pada DB Cloud (Supabase).', 'warning', 3000);
   }
 
   loadSettings();

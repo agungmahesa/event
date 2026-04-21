@@ -15,14 +15,14 @@
       <img src="../img/logo.png" alt="Matchaji" style="height:32px;">
     </div>
     <div class="sidebar-section-label">Menu</div>
-    <a class="sidebar-link active" href="index.html"><span class="icon">📊</span> Dashboard</a>
-    <a class="sidebar-link" href="events.html"><span class="icon">📅</span> Kelola Event</a>
-    <a class="sidebar-link" href="registrants.html"><span class="icon">👥</span> Peserta</a>
-    <a class="sidebar-link" href="checkin.html"><span class="icon">📷</span> QR Check-in</a>
-    <a class="sidebar-link" href="settings.html"><span class="icon">⚙️</span> Pengaturan</a>
+    <a class="sidebar-link active" href="/admin"><span class="icon">📊</span> Dashboard</a>
+    <a class="sidebar-link" href="/admin/events"><span class="icon">📅</span> Kelola Event</a>
+    <a class="sidebar-link" href="/admin/registrants"><span class="icon">👥</span> Peserta</a>
+    <a class="sidebar-link" href="/admin/checkin"><span class="icon">📷</span> QR Check-in</a>
+    <a class="sidebar-link" href="/admin/settings"><span class="icon">⚙️</span> Pengaturan</a>
     <div class="sidebar-section-label" style="margin-top:auto;">Lainnya</div>
-    <a class="sidebar-link" href="../index.html"><span class="icon">🌐</span> Website</a>
-    <a class="sidebar-link" href="../register.html"><span class="icon">📋</span> Form Daftar</a>
+    <a class="sidebar-link" href="/"><span class="icon">🌐</span> Website</a>
+    <a class="sidebar-link" href="/register"><span class="icon">📋</span> Form Daftar</a>
     <a class="sidebar-link" href="#" onclick="adminLogout(); return false;" style="color:var(--red);"><span class="icon">🚪</span> Logout</a>
   </nav>
 
@@ -34,7 +34,7 @@
           <h1>Dashboard</h1>
           <p class="text-sm text-muted" id="last-updated">—</p>
         </div>
-        <a href="registrants.html" class="btn btn-ghost btn-sm">👥 Lihat Semua Peserta →</a>
+        <a href="/admin/registrants" class="btn btn-ghost btn-sm">👥 Lihat Semua Peserta →</a>
       </div>
     </div>
 
@@ -52,7 +52,7 @@
           <div class="stat-value text-cyan" id="stat-total-registrants">0</div>
           <div class="stat-label">Peserta</div>
         </div>
-        <div class="stat-card" style="border-color:rgba(245,158,11,0.3);cursor:pointer;" onclick="location.href='registrants.html?filter_payment=pending'">
+        <div class="stat-card" style="border-color:rgba(245,158,11,0.3);cursor:pointer;" onclick="location.href='/admin/registrants?filter_payment=pending'">
           <div class="stat-icon">⏳</div>
           <div class="stat-value text-amber" id="stat-pending">0</div>
           <div class="stat-label">Pending</div>
@@ -73,7 +73,7 @@
           </div>
           <div style="display:flex;gap:0.5rem;">
             <button class="btn btn-ghost btn-sm" onclick="renderPendingSection()">🔄</button>
-            <a href="registrants.html" class="btn btn-ghost btn-sm">Lihat Semua →</a>
+            <a href="/admin/registrants" class="btn btn-ghost btn-sm">Lihat Semua →</a>
           </div>
         </div>
         <div id="pending-section"></div>
@@ -83,7 +83,7 @@
       <div style="margin-bottom:1.5rem;">
         <div class="flex items-center justify-between mb-2">
           <h3>📈 Ringkasan Event</h3>
-          <a href="events.html" class="btn btn-ghost btn-sm">Kelola →</a>
+          <a href="/admin/events" class="btn btn-ghost btn-sm">Kelola →</a>
         </div>
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:0.75rem;" id="event-summary-cards"></div>
       </div>
@@ -92,25 +92,21 @@
       <div>
         <h3 style="margin-bottom:1rem;">🚀 Aksi Cepat</h3>
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:0.75rem;">
-          <a href="checkin.html" class="card" style="text-align:center;padding:1.25rem;text-decoration:none;cursor:pointer;">
-            <div style="font-size:2rem;margin-bottom:0.5rem;">📷</div>
-            <div class="font-semibold text-sm">Mulai QR Scan</div>
-            <div class="text-xs text-muted mt-1">Check-in peserta</div>
+          <a href="/admin/checkin" class="card" style="text-align:center;padding:1.25rem;text-decoration:none;cursor:pointer;">
+            <div style="font-size:1.5rem;margin-bottom:0.5rem;">📷</div>
+            <div class="font-bold text-sm">Scan QR</div>
           </a>
-          <a href="events.html" class="card" style="text-align:center;padding:1.25rem;text-decoration:none;cursor:pointer;">
-            <div style="font-size:2rem;margin-bottom:0.5rem;">📅</div>
-            <div class="font-semibold text-sm">Tambah Event</div>
-            <div class="text-xs text-muted mt-1">Kelola event</div>
+          <a href="/admin/events" class="card" style="text-align:center;padding:1.25rem;text-decoration:none;cursor:pointer;">
+            <div style="font-size:1.5rem;margin-bottom:0.5rem;">📅</div>
+            <div class="font-bold text-sm">Kelola Event</div>
           </a>
-          <a href="registrants.html" class="card" style="text-align:center;padding:1.25rem;text-decoration:none;cursor:pointer;">
-            <div style="font-size:2rem;margin-bottom:0.5rem;">👥</div>
-            <div class="font-semibold text-sm">Data Peserta</div>
-            <div class="text-xs text-muted mt-1">Filter & export</div>
+          <a href="/admin/registrants" class="card" style="text-align:center;padding:1.25rem;text-decoration:none;cursor:pointer;">
+            <div style="font-size:1.5rem;margin-bottom:0.5rem;">👥</div>
+            <div class="font-bold text-sm">Peserta</div>
           </a>
-          <a href="settings.html" class="card" style="text-align:center;padding:1.25rem;text-decoration:none;cursor:pointer;">
-            <div style="font-size:2rem;margin-bottom:0.5rem;">🏦</div>
-            <div class="font-semibold text-sm">Atur Bank</div>
-            <div class="text-xs text-muted mt-1">Info pembayaran</div>
+          <a href="/admin/settings" class="card" style="text-align:center;padding:1.25rem;text-decoration:none;cursor:pointer;">
+            <div style="font-size:1.5rem;margin-bottom:0.5rem;">⚙️</div>
+            <div class="font-bold text-sm">Pengaturan</div>
           </a>
         </div>
       </div>
@@ -121,14 +117,14 @@
 
 <!-- BOTTOM NAV (Mobile) -->
 <nav class="bottom-nav">
-  <a class="bottom-nav-item active" href="index.html">
+  <a class="bottom-nav-item active" href="/admin">
     <span class="nav-icon">📊</span>
     <span>Dashboard</span>
     <span class="bottom-nav-badge hidden" id="bottom-pending-badge">0</span>
   </a>
-  <a class="bottom-nav-item" href="events.html"><span class="nav-icon">📅</span><span>Event</span></a>
-  <a class="bottom-nav-item" href="registrants.html"><span class="nav-icon">👥</span><span>Peserta</span></a>
-  <a class="bottom-nav-item" href="checkin.html"><span class="nav-icon">📷</span><span>Check-in</span></a>
+  <a class="bottom-nav-item" href="/admin/events"><span class="nav-icon">📅</span><span>Event</span></a>
+  <a class="bottom-nav-item" href="/admin/registrants"><span class="nav-icon">👥</span><span>Peserta</span></a>
+  <a class="bottom-nav-item" href="/admin/checkin"><span class="nav-icon">📷</span><span>Check-in</span></a>
 </nav>
 
 <!-- REJECT MODAL -->
@@ -158,18 +154,19 @@
 </div>
 
 <div id="toast-container"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/app.js"></script>
 <script src="../js/admin.js"></script>
 <script>
-  function renderPendingSection() {
+  async function renderPendingSection() {
     const container = document.getElementById('pending-section');
-    const pending = DB.getPendingPayments();
+    const pending = await DB.getPendingPayments();
     const badge = document.getElementById('pending-count-badge');
     const bottomBadge = document.getElementById('bottom-pending-badge');
 
     if (!pending.length) {
       badge.style.display = 'none';
-      bottomBadge.classList.add('hidden');
+      if (bottomBadge) bottomBadge.classList.add('hidden');
       container.innerHTML = `<div style="padding:1.5rem;text-align:center;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);">
         <div style="font-size:2rem;margin-bottom:0.4rem;">🎉</div>
         <p class="text-sm text-muted">Tidak ada pembayaran yang menunggu validasi.</p>
@@ -178,27 +175,29 @@
     }
 
     badge.textContent = pending.length; badge.style.display = 'inline-flex';
-    bottomBadge.textContent = pending.length; bottomBadge.classList.remove('hidden');
+    if (bottomBadge) {
+      bottomBadge.textContent = pending.length; bottomBadge.classList.remove('hidden');
+    }
 
-    const events = DB.getEvents();
+    const events = await DB.getEvents();
     container.innerHTML = pending.map(r => {
       const ev = events.find(e => e.id === r.eventId);
       const hasProof = !!r.paymentProof;
       return `
         <div class="pending-card mb-1">
           <div class="pending-card-info">
-            <div class="font-semibold text-sm">${r.name}</div>
+            <div class="font-semibold text-sm">${r.fullName || r.name}</div>
             <div class="text-xs text-muted">${r.email} · ${r.phone}</div>
             <div class="text-xs text-muted mt-1">${ev ? ev.name.substring(0,40) : '-'}</div>
             <div class="flex items-center gap-1 mt-1" style="flex-wrap:wrap;">
               <span class="badge badge-violet" style="font-size:0.65rem;">${r.id}</span>
-              <span class="badge badge-gray" style="font-size:0.65rem;">${r.ticketType}</span>
-              <span class="badge badge-amber" style="font-size:0.65rem;">${formatCurrency(r.ticketPrice)}</span>
+              <span class="badge badge-gray" style="font-size:0.65rem;">${r.ticketType || r.ticketId}</span>
+              <span class="badge badge-amber" style="font-size:0.65rem;">${formatCurrency(r.ticketPrice || 0)}</span>
               ${hasProof
                 ? `<span class="badge badge-green" style="font-size:0.65rem;cursor:pointer;" onclick="viewProofLightbox('${r.id}')">📎 Ada Bukti</span>`
                 : `<span class="badge badge-gray" style="font-size:0.65rem;">Belum ada bukti</span>`}
             </div>
-            <div class="text-xs text-muted mt-1">Daftar: ${formatDateTime(r.registeredAt)}</div>
+            <div class="text-xs text-muted mt-1">Daftar: ${formatDateTime(r.createdAt || r.registeredAt)}</div>
           </div>
           <div class="pending-card-actions">
             ${hasProof ? `<button class="btn btn-ghost btn-sm" onclick="viewProofLightbox('${r.id}')">📎</button>` : ''}
@@ -209,8 +208,8 @@
     }).join('');
   }
 
-  function viewProofLightbox(regId) {
-    const reg = DB.getRegistrant(regId);
+  async function viewProofLightbox(regId) {
+    const reg = await DB.getRegistrant(regId);
     if (!reg?.paymentProof) return;
     document.getElementById('proof-lightbox-img').src = reg.paymentProof;
     document.getElementById('proof-lightbox').style.display = 'flex';
@@ -222,30 +221,32 @@
     document.getElementById('reject-modal-overlay').classList.add('open');
   }
   function closeRejectModal() { document.getElementById('reject-modal-overlay').classList.remove('open'); }
-  function confirmReject() {
+  async function confirmReject() {
     const regId = document.getElementById('reject-reg-id').value;
     const reason = document.getElementById('reject-reason').value.trim();
-    const reg = DB.rejectPayment(regId, reason);
+    const reg = await DB.rejectPayment(regId, reason);
     if (reg) {
-      showToast(`Pembayaran ${reg.name} ditolak.`, 'warning', 3000);
+      showToast(`Pembayaran ${reg.fullName || reg.name} ditolak.`, 'warning', 3000);
       closeRejectModal();
-      renderPendingSection();
-      renderStats();
+      await renderPendingSection();
+      await renderStats();
     }
   }
 
-  function renderStats() {
-    const stats = DB.getStats();
+  async function renderStats() {
+    const stats = await DB.getStats();
     document.getElementById('stat-total-events').textContent = stats.totalEvents;
     document.getElementById('stat-total-registrants').textContent = stats.totalRegistrants;
     document.getElementById('stat-pending').textContent = stats.pendingPayment;
     document.getElementById('stat-checked-in').textContent = stats.checkedIn;
   }
 
-  document.getElementById('last-updated').textContent = 'Terakhir update: ' + new Date().toLocaleString('id-ID');
-  renderStats();
-  renderPendingSection();
-  renderEventSummaryCards();
+  (async function init() {
+    document.getElementById('last-updated').textContent = 'Terakhir update: ' + new Date().toLocaleString('id-ID');
+    await renderStats();
+    await renderPendingSection();
+    await renderEventSummaryCards();
+  })();
 </script>
 </body>
 </html>

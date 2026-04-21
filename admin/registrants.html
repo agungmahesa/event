@@ -14,14 +14,14 @@
       <img src="../img/logo.png" alt="Matchaji" style="height:32px;">
     </div>
     <div class="sidebar-section-label">Menu</div>
-    <a class="sidebar-link" href="index.html"><span class="icon">📊</span> Dashboard</a>
-    <a class="sidebar-link" href="events.html"><span class="icon">📅</span> Kelola Event</a>
-    <a class="sidebar-link active" href="registrants.html"><span class="icon">👥</span> Peserta</a>
-    <a class="sidebar-link" href="checkin.html"><span class="icon">📷</span> QR Check-in</a>
-    <a class="sidebar-link" href="settings.html"><span class="icon">⚙️</span> Pengaturan</a>
+    <a class="sidebar-link" href="/admin"><span class="icon">📊</span> Dashboard</a>
+    <a class="sidebar-link" href="/admin/events"><span class="icon">📅</span> Kelola Event</a>
+    <a class="sidebar-link active" href="/admin/registrants"><span class="icon">👥</span> Peserta</a>
+    <a class="sidebar-link" href="/admin/checkin"><span class="icon">📷</span> QR Check-in</a>
+    <a class="sidebar-link" href="/admin/settings"><span class="icon">⚙️</span> Pengaturan</a>
     <div class="sidebar-section-label" style="margin-top:auto;">Lainnya</div>
-    <a class="sidebar-link" href="../index.html"><span class="icon">🌐</span> Website</a>
-    <a class="sidebar-link" href="../register.html"><span class="icon">📋</span> Form Daftar</a>
+    <a class="sidebar-link" href="/"><span class="icon">🌐</span> Website</a>
+    <a class="sidebar-link" href="/register"><span class="icon">📋</span> Form Daftar</a>
     <a class="sidebar-link" href="#" onclick="adminLogout(); return false;" style="color:var(--red);"><span class="icon">🚪</span> Logout</a>
   </nav>
 
@@ -133,13 +133,14 @@
 
 <!-- BOTTOM NAV -->
 <nav class="bottom-nav">
-  <a class="bottom-nav-item" href="index.html"><span class="nav-icon">📊</span><span>Dashboard</span></a>
-  <a class="bottom-nav-item" href="events.html"><span class="nav-icon">📅</span><span>Event</span></a>
-  <a class="bottom-nav-item active" href="registrants.html"><span class="nav-icon">👥</span><span>Peserta</span></a>
-  <a class="bottom-nav-item" href="checkin.html"><span class="nav-icon">📷</span><span>Check-in</span></a>
+  <a class="bottom-nav-item" href="/admin"><span class="nav-icon">📊</span><span>Dashboard</span></a>
+  <a class="bottom-nav-item" href="/admin/events"><span class="nav-icon">📅</span><span>Event</span></a>
+  <a class="bottom-nav-item active" href="/admin/registrants"><span class="nav-icon">👥</span><span>Peserta</span></a>
+  <a class="bottom-nav-item" href="/admin/checkin"><span class="nav-icon">📷</span><span>Check-in</span></a>
 </nav>
 
 <div id="toast-container"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/app.js"></script>
 <script src="../js/admin.js"></script>
 <script>
@@ -147,20 +148,20 @@
   let currentPage = 1;
   let filteredRegs = [];
 
-  function initFilters() {
-    const events = DB.getEvents();
+  async function initFilters() {
+    const events = await DB.getEvents();
     const sel = document.getElementById('filter-event');
     sel.innerHTML = '<option value="">Semua Event</option>' +
       events.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
   }
 
-  function applyFilters() {
+  async function applyFilters() {
     const q = document.getElementById('search-q').value.toLowerCase().trim();
     const evId = document.getElementById('filter-event').value;
     const pay = document.getElementById('filter-payment').value;
     const ci = document.getElementById('filter-checkin').value;
 
-    let regs = DB.getRegistrants();
+    let regs = await DB.getRegistrants();
     if (q) regs = regs.filter(r =>
       r.name.toLowerCase().includes(q) ||
       r.email.toLowerCase().includes(q) ||
@@ -172,12 +173,12 @@
     if (ci === 'yes') regs = regs.filter(r => r.checkedIn);
     if (ci === 'no') regs = regs.filter(r => !r.checkedIn);
 
-    filteredRegs = regs.sort((a, b) => new Date(b.registeredAt) - new Date(a.registeredAt));
+    filteredRegs = regs.sort((a, b) => new Date(b.createdAt || b.registeredAt) - new Date(a.createdAt || a.registeredAt));
     currentPage = 1;
-    renderTable();
+    await renderTable();
   }
 
-  function renderTable() {
+  async function renderTable() {
     const tbody = document.getElementById('reg-tbody');
     const total = filteredRegs.length;
     const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -187,7 +188,7 @@
     document.getElementById('reg-count-label').textContent = `${total} peserta ditemukan`;
     document.getElementById('pagination-info').textContent = `Halaman ${currentPage} dari ${totalPages} (${total} total)`;
 
-    const events = DB.getEvents();
+    const events = await DB.getEvents();
     const payBadge = {
       pending:  `<span class="badge badge-amber" style="font-size:0.68rem;">⏳ Pending</span>`,
       approved: `<span class="badge badge-green" style="font-size:0.68rem;">✅ Approved</span>`,
@@ -231,7 +232,7 @@
             <div style="display:flex;gap:0.3rem;flex-wrap:wrap;">
               ${approveBtn}
               <button class="btn btn-ghost btn-sm" onclick="openRejectModal('${r.id}')" style="height:30px;padding:0 0.5rem;font-size:0.72rem;">🚫</button>
-              <a href="../ticket.html?id=${r.id}" target="_blank" class="btn btn-ghost btn-sm" style="height:30px;padding:0 0.5rem;font-size:0.72rem;">🍵</a>
+              <a href="/ticket?id=${r.id}" target="_blank" class="btn btn-ghost btn-sm" style="height:30px;padding:0 0.5rem;font-size:0.72rem;">🍵</a>
             </div>
           </td>
         </tr>`;
@@ -259,8 +260,8 @@
 
   // Proof modal
   let proofViewRegId = null;
-  function viewProof(regId) {
-    const reg = DB.getRegistrant(regId);
+  async function viewProof(regId) {
+    const reg = await DB.getRegistrant(regId);
     if (!reg?.paymentProof) return;
     proofViewRegId = regId;
     document.getElementById('proof-modal-content').innerHTML = `
@@ -280,19 +281,21 @@
     document.getElementById('reject-modal-overlay').classList.add('open');
   }
   function closeRejectModal() { document.getElementById('reject-modal-overlay').classList.remove('open'); }
-  function confirmReject() {
+  async function confirmReject() {
     const regId = document.getElementById('reject-reg-id').value;
     const reason = document.getElementById('reject-reason').value.trim();
-    const reg = DB.rejectPayment(regId, reason);
+    const reg = await DB.rejectPayment(regId, reason);
     if (reg) {
-      showToast(`Pembayaran ${reg.name} ditolak.`, 'warning');
+      showToast(`Pembayaran ${reg.name || reg.fullName} ditolak.`, 'warning');
       closeRejectModal();
-      applyFilters();
+      await applyFilters();
     }
   }
 
-  initFilters();
-  applyFilters();
+  (async function init() {
+    await initFilters();
+    await applyFilters();
+  })();
 </script>
 </body>
 </html>

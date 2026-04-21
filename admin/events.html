@@ -16,14 +16,14 @@
       <img src="../img/logo.png" alt="Matchaji" style="height:32px;">
     </div>
     <div class="sidebar-section-label">Menu</div>
-    <a class="sidebar-link" href="index.html" data-page="index.html"><span class="icon">📊</span> Dashboard</a>
-    <a class="sidebar-link active" href="events.html" data-page="events.html"><span class="icon">📅</span> Kelola Event</a>
-    <a class="sidebar-link" href="registrants.html" data-page="registrants.html"><span class="icon">👥</span> Peserta</a>
-    <a class="sidebar-link" href="checkin.html" data-page="checkin.html"><span class="icon">📷</span> QR Check-in</a>
-    <a class="sidebar-link" href="settings.html" data-page="settings.html"><span class="icon">⚙️</span> Pengaturan</a>
+    <a class="sidebar-link" href="/admin" data-page="index.html"><span class="icon">📊</span> Dashboard</a>
+    <a class="sidebar-link active" href="/admin/events" data-page="events.html"><span class="icon">📅</span> Kelola Event</a>
+    <a class="sidebar-link" href="/admin/registrants" data-page="registrants.html"><span class="icon">👥</span> Peserta</a>
+    <a class="sidebar-link" href="/admin/checkin" data-page="checkin.html"><span class="icon">📷</span> QR Check-in</a>
+    <a class="sidebar-link" href="/admin/settings" data-page="settings.html"><span class="icon">⚙️</span> Pengaturan</a>
     <div class="sidebar-section-label" style="margin-top:auto;">Lainnya</div>
-    <a class="sidebar-link" href="../index.html"><span class="icon">🌐</span> Lihat Website</a>
-    <a class="sidebar-link" href="../register.html"><span class="icon">📋</span> Form Registrasi</a>
+    <a class="sidebar-link" href="/" data-page="index.html"><span class="icon">🌐</span> Lihat Website</a>
+    <a class="sidebar-link" href="/register" data-page="register.html"><span class="icon">📋</span> Form Registrasi</a>
     <a class="sidebar-link" href="#" onclick="adminLogout(); return false;" style="color:var(--red);"><span class="icon">🚪</span> Logout</a>
   </nav>
 
@@ -178,6 +178,7 @@
 </div>
 
 <div id="toast-container"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/app.js"></script>
 <script src="../js/admin.js"></script>
 <script>
@@ -257,10 +258,10 @@
 
 <!-- BOTTOM NAV -->
 <nav class="bottom-nav">
-  <a class="bottom-nav-item" href="index.html"><span class="nav-icon">📊</span><span>Dashboard</span></a>
-  <a class="bottom-nav-item active" href="events.html"><span class="nav-icon">📅</span><span>Event</span></a>
-  <a class="bottom-nav-item" href="registrants.html"><span class="nav-icon">👥</span><span>Peserta</span></a>
-  <a class="bottom-nav-item" href="checkin.html"><span class="nav-icon">📷</span><span>Check-in</span></a>
+  <a class="bottom-nav-item" href="/admin"><span class="nav-icon">📊</span><span>Dashboard</span></a>
+  <a class="bottom-nav-item active" href="/admin/events"><span class="nav-icon">📅</span><span>Event</span></a>
+  <a class="bottom-nav-item" href="/admin/registrants"><span class="nav-icon">👥</span><span>Peserta</span></a>
+  <a class="bottom-nav-item" href="/admin/checkin"><span class="nav-icon">📷</span><span>Check-in</span></a>
 </nav>
 
 </body>

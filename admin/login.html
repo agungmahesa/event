@@ -28,23 +28,21 @@
       <button type="submit" class="btn btn-primary btn-full btn-lg" id="btn-login">Masuk ke Dashboard</button>
     </form>
     
-    <div style="margin-top:1.5rem;padding:1rem;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--radius-sm);text-align:center;">
-      <div class="text-xs text-muted mb-1">Kredensial Demo:</div>
-      <div class="font-semibold text-sm" style="color:var(--violet-light);">Username: admin<br>Password: admin123</div>
-    </div>
+
   </div>
   
   <div style="text-align:center;margin-top:1.5rem;">
-    <a href="../index.html" class="btn btn-ghost btn-sm">← Kembali ke Website</a>
+    <a href="/" class="btn btn-ghost btn-sm">← Kembali ke Website</a>
   </div>
 </div>
 
 <div id="toast-container"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/app.js"></script>
 <script>
   // Cek jika sudah login
   if (localStorage.getItem('evtreg_admin_auth') === 'true') {
-    window.location.replace('index.html');
+    window.location.replace('/admin');
   }
 
   document.getElementById('login-form').addEventListener('submit', (e) => {
@@ -58,10 +56,10 @@
 
     // Simulasi loading sebentar agar terasa interaktif
     setTimeout(() => {
-      if (u === 'admin' && p === 'admin123') {
+      if (u === 'Matcha.ji' && p === 'Travel101!') {
         localStorage.setItem('evtreg_admin_auth', 'true');
         showToast('Login berhasil!', 'success');
-        setTimeout(() => window.location.replace('index.html'), 800);
+        setTimeout(() => window.location.replace('/admin'), 800);
       } else {
         showToast('Username atau password salah', 'error');
         btn.disabled = false;

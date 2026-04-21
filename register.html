@@ -12,12 +12,12 @@
 <nav class="navbar">
   <div class="container">
     <div class="navbar-inner">
-      <a class="navbar-brand" href="index.html">
+      <a class="navbar-brand" href="/">
         <img src="img/logo.png" alt="Matchaji" style="height:32px;">
       </a>
       <div class="navbar-links">
-        <a href="index.html">Beranda</a>
-        <a href="register.html" class="active">Daftar</a>
+        <a href="/">Beranda</a>
+        <a href="/register" class="active">Daftar</a>
       </div>
       <button class="hamburger" id="hamburger-btn" aria-label="Menu">
         <span></span><span></span><span></span>
@@ -30,8 +30,8 @@
 <div class="mobile-drawer" id="mobile-drawer" onclick="closeMobileDrawer(event)">
   <div class="mobile-drawer-panel">
     <div style="font-size:1rem;font-weight:800;color:var(--violet-light);margin-bottom:1.5rem;display:flex;align-items:center;gap:0.5rem;">🍵 Matchaji Roadshow</div>
-    <a href="index.html" class="mobile-drawer-link">🏠 Beranda</a>
-    <a href="register.html" class="mobile-drawer-link active">📋 Daftar Event</a>
+    <a href="/" class="mobile-drawer-link">🏠 Beranda</a>
+    <a href="/register" class="mobile-drawer-link active">📋 Daftar Event</a>
   </div>
 </div>
 
@@ -43,7 +43,7 @@
       <div class="empty-icon">😕</div>
       <h3>Event Tidak Ditemukan</h3>
       <p>Pilih event dari halaman beranda terlebih dahulu.</p>
-      <a href="index.html" class="btn btn-primary btn-full mt-2">Lihat Event</a>
+      <a href="/" class="btn btn-primary btn-full mt-2">Lihat Event</a>
     </div>
 
     <!-- SUCCESS / PENDING STATE -->
@@ -93,7 +93,7 @@
 
       <div style="display:flex;flex-direction:column;gap:0.75rem;">
         <a id="view-ticket-btn" href="#" class="btn btn-primary btn-full btn-lg">🍵 Lihat Status Tiket</a>
-        <a href="index.html" class="btn btn-ghost btn-full">← Lihat Event Lain</a>
+        <a href="/" class="btn btn-ghost btn-full">← Lihat Event Lain</a>
       </div>
     </div>
 
@@ -237,6 +237,7 @@
 </div>
 
 <div id="toast-container"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/app.js"></script>
 <script>
   let currentStep = 1;
@@ -252,22 +253,14 @@
     if (e.target.id === 'mobile-drawer') document.getElementById('mobile-drawer').classList.remove('open');
   }
 
-  function init() {
+  async function init() {
     selectedEventId = getUrlParam('event');
-    if (!selectedEventId) {
-      document.getElementById('no-event-msg').classList.remove('hidden');
-      document.getElementById('form-wrapper').classList.add('hidden');
-      return;
-    }
-    currentEvent = DB.getEvent(selectedEventId);
-    if (!currentEvent) {
-      document.getElementById('no-event-msg').classList.remove('hidden');
-      document.getElementById('form-wrapper').classList.add('hidden');
-      return;
-    }
+    if (!selectedEventId) { window.location.href = '/'; return; }
+    currentEvent = await DB.getEvent(selectedEventId);
+    if (!currentEvent) { window.location.href = '/'; return; }
     document.title = `Daftar: ${currentEvent.name} — Matchaji Roadshow`;
     populateEventBanner();
-    populateTickets();
+    await populateTickets();
     populateTerms();
   }
 
@@ -283,13 +276,14 @@
     }
   }
 
-  function populateTickets() {
+  async function populateTickets() {
     const container = document.getElementById('ticket-options');
-    container.innerHTML = currentEvent.tickets.map(t => {
-      const sold = getRegistrantCount(selectedEventId, t.id);
+    let html = '';
+    for (const t of currentEvent.tickets) {
+      const sold = await getRegistrantCount(selectedEventId, t.id);
       const avail = (t.quota || 9999) - sold;
       const soldOut = avail <= 0;
-      return `
+      html += `
         <label style="cursor:${soldOut?'not-allowed':'pointer'};opacity:${soldOut?0.5:1};display:block;">
           <input type="radio" name="ticket" value="${t.id}" data-price="${t.price}" data-name="${t.name}" ${soldOut?'disabled':''} onchange="selectTicket(this)" style="display:none;">
           <div class="card" id="ticket-card-${t.id}" style="transition:var(--transition);cursor:${soldOut?'not-allowed':'pointer'};">
@@ -304,7 +298,8 @@
             </div>
           </div>
         </label>`;
-    }).join('');
+    }
+    container.innerHTML = html;
   }
 
   function selectTicket(radio) {
@@ -398,7 +393,7 @@
   function submitRegistration() {
     const btn = document.getElementById('btn-submit');
     btn.disabled = true; btn.textContent = '⏳ Memproses...';
-    setTimeout(() => {
+    setTimeout(async () => {
       const registrantId = generateId('REG');
       const qrCode = generateId('QR');
       const isFree = selectedTicket.price === 0;
@@ -418,21 +413,24 @@
         paymentMethod: document.getElementById('payment-method').value,
         agreedToTerms: document.getElementById('agree-terms')?.checked || false,
         registeredAt: new Date().toISOString(),
-        // Payment status
         paymentStatus: isFree ? 'free' : 'pending',
         bookingStatus: isFree ? 'confirmed' : 'pending_payment',
-        approvedAt: isFree ? new Date().toISOString() : null,
-        // Check-in
         checkedIn: false,
         checkedInAt: null,
       };
-      DB.saveRegistrant(reg);
+
+      const result = await DB.saveRegistrant(reg);
+      if (!result) {
+        showToast('Gagal menyimpan pendaftaran. Periksa koneksi Anda.', 'error');
+        btn.disabled = false; btn.textContent = '🎉 Daftar Sekarang';
+        return;
+      }
 
       // Show success screen
       document.getElementById('form-wrapper').classList.add('hidden');
       document.getElementById('success-screen').classList.remove('hidden');
       document.getElementById('success-reg-id').textContent = registrantId;
-      document.getElementById('view-ticket-btn').href = `ticket.html?id=${registrantId}`;
+      document.getElementById('view-ticket-btn').href = `/ticket?id=${registrantId}`;
       document.getElementById('payment-instructions').textContent =
         currentEvent?.paymentInfo || 'Tim panitia akan menghubungi informasi pembayaran via WhatsApp/Email.';
 
@@ -445,7 +443,7 @@
           timerEl.textContent = count;
           if (count <= 0) {
             clearInterval(countInterval);
-            window.location.replace(`ticket.html?id=${registrantId}`);
+            window.location.replace(`/ticket?id=${registrantId}`);
           }
         }, 1000);
       } else {

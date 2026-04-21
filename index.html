@@ -17,8 +17,8 @@
         <img src="img/logo.png" alt="Matchaji" style="height:32px;">
       </div>
       <div class="navbar-links">
-        <a href="index.html" class="active">Beranda</a>
-        <a href="register.html">Daftar</a>
+        <a href="/" class="active">Beranda</a>
+        <a href="/register">Daftar</a>
       </div>
     </div>
   </div>
@@ -108,11 +108,12 @@
 
 <div id="toast-container"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/app.js"></script>
 <script>
   let allEvents = [];
 
-  function renderEvents(events) {
+  async function renderEvents(events) {
     const grid = document.getElementById('events-grid');
     const noEvents = document.getElementById('no-events');
     if (!events.length) {
@@ -121,8 +122,13 @@
       return;
     }
     noEvents.classList.add('hidden');
-    grid.innerHTML = events.map(ev => {
-      const regs = DB.getRegistrantsByEvent(ev.id);
+
+    // Fetch all registrants for these events to calculate quota in one go if possible,
+    // or keep it simple for now and await each count.
+    
+    let html = '';
+    for (const ev of events) {
+      const regs = await DB.getRegistrantsByEvent(ev.id);
       const firstImg = ev.gallery && ev.gallery.length ? ev.gallery[0] : null;
       const minPrice = ev.tickets?.reduce((min, t) => Math.min(min, t.price), Infinity) ?? 0;
       const totalQuota = ev.tickets?.reduce((s, t) => s + (t.quota || 0), 0) || ev.capacity;
@@ -130,8 +136,8 @@
       const isSoldOut = pct >= 100;
       const isAlmostFull = pct >= 80 && pct < 100;
 
-      return `
-        <div class="event-card" onclick="location.href='register.html?event=${ev.id}'" id="event-${ev.id}">
+      html += `
+        <div class="event-card" onclick="location.href='/register?event=${ev.id}'" id="event-${ev.id}">
           <div class="event-card-img">
             ${firstImg
               ? `<img src="${firstImg}" alt="${ev.name}">`
@@ -164,7 +170,8 @@
             </button>
           </div>
         </div>`;
-    }).join('');
+    }
+    grid.innerHTML = html;
   }
 
   function filterEvents() {
@@ -178,16 +185,18 @@
     renderEvents(filtered);
   }
 
-  function initStats() {
-    const stats = DB.getStats();
+  async function initStats() {
+    const stats = await DB.getStats();
     document.getElementById('hl-events').textContent = stats.totalEvents;
     document.getElementById('hl-regs').textContent = stats.totalRegistrants;
     document.getElementById('hl-checked').textContent = stats.checkedIn;
   }
 
-  allEvents = DB.getEvents();
-  renderEvents(allEvents.filter(e => e.status === 'active'));
-  initStats();
+  (async function init() {
+    allEvents = await DB.getEvents();
+    renderEvents(allEvents.filter(e => e.status === 'active'));
+    initStats();
+  })();
 </script>
 </body>
 </html>

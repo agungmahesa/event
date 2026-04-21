@@ -4,51 +4,54 @@
 
 // ---- AUTH & SECURITY CHECK ----
 (function checkAdminAuth() {
-  if (!window.location.pathname.endsWith('login.html')) {
+  if (!window.location.pathname.endsWith('login')) {
     if (localStorage.getItem('evtreg_admin_auth') !== 'true') {
-      window.location.replace('login.html');
+      window.location.replace('/admin/login');
     }
   }
 })();
 
 function adminLogout() {
   localStorage.removeItem('evtreg_admin_auth');
-  window.location.replace('login.html');
+  window.location.replace('/admin/login');
 }
 
 // ---- SHARED SIDEBAR ACTIVE STATE ----
 function initSidebar() {
-  const currentPage = window.location.pathname.split('/').pop();
+  const path = window.location.pathname;
   document.querySelectorAll('.sidebar-link').forEach(link => {
-    if (link.dataset.page === currentPage) link.classList.add('active');
+    const cleanUrl = link.getAttribute('href');
+    if (path === cleanUrl || (path === '/admin' && cleanUrl === '/admin')) {
+      link.classList.add('active');
+    }
   });
 }
 
 // ================================================================
 // ADMIN DASHBOARD (admin/index.html)
 // ================================================================
-function initDashboard() {
-  renderStats();
-  renderRecentRegistrants();
-  initEventFilter();
-  renderEventSummaryCards();
+async function initDashboard() {
+  await renderStats();
+  await renderRecentRegistrants();
+  await initEventFilter();
+  await renderEventSummaryCards();
 }
 
 // Global: callable from inline onclick in table rows
-function approvePayment(regId) {
-  const reg = DB.approvePayment(regId);
+async function approvePayment(regId) {
+  const reg = await DB.approvePayment(regId);
   if (reg) {
     showToast(`✅ Pembayaran ${reg.name} disetujui! Tiket aktif.`, 'success', 4000);
     // Refresh all sections that exist on the current page
-    if (typeof renderPendingSection === 'function') renderPendingSection();
-    if (typeof renderStats === 'function') renderStats();
-    if (typeof renderRecentRegistrants === 'function') renderRecentRegistrants(document.getElementById('filter-event')?.value || '');
-    if (typeof applyFilters === 'function') applyFilters(); // for registrants.html
+    if (typeof renderPendingSection === 'function') await renderPendingSection();
+    if (typeof renderStats === 'function') await renderStats();
+    if (typeof renderRecentRegistrants === 'function') await renderRecentRegistrants(document.getElementById('filter-event')?.value || '');
+    if (typeof applyFilters === 'function') await applyFilters(); // for registrants.html
   }
 }
 
-function renderStats() {
-  const stats = DB.getStats();
+async function renderStats() {
+  const stats = await DB.getStats();
   setEl('stat-total-events', stats.totalEvents);
   setEl('stat-total-registrants', stats.totalRegistrants);
   setEl('stat-checked-in', stats.checkedIn);
@@ -56,17 +59,18 @@ function renderStats() {
   setEl('stat-pending', stats.pendingPayment || 0);
 }
 
-function renderEventSummaryCards() {
+async function renderEventSummaryCards() {
   const container = document.getElementById('event-summary-cards');
   if (!container) return;
-  const events = DB.getEvents();
+  const events = await DB.getEvents();
   if (!events.length) { container.innerHTML = '<p class="text-muted text-sm">Belum ada event.</p>'; return; }
 
-  container.innerHTML = events.map(ev => {
-    const regs = DB.getRegistrantsByEvent(ev.id);
+  let html = '';
+  for (const ev of events) {
+    const regs = await DB.getRegistrantsByEvent(ev.id);
     const checked = regs.filter(r => r.checkedIn).length;
     const pct = regs.length ? Math.round((checked / regs.length) * 100) : 0;
-    return `
+    html += `
       <div class="card" style="padding:1.2rem;">
         <div class="flex items-center justify-between mb-2">
           <span class="badge ${getCategoryBadge(ev.category)}">${ev.category}</span>
@@ -82,57 +86,58 @@ function renderEventSummaryCards() {
         </div>
         <div class="text-xs text-muted mt-1">${pct}% check-in</div>
       </div>`;
-  }).join('');
+  }
+  container.innerHTML = html;
 }
 
-function initEventFilter() {
+async function initEventFilter() {
   const select = document.getElementById('filter-event');
   if (!select) return;
-  const events = DB.getEvents();
+  const events = await DB.getEvents();
   select.innerHTML = `<option value="">Semua Event</option>` +
     events.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
   select.addEventListener('change', () => renderRecentRegistrants(select.value));
 }
 
-function renderRecentRegistrants(eventId = '') {
+async function renderRecentRegistrants(eventId = '') {
   const tbody = document.getElementById('registrants-tbody');
   if (!tbody) return;
-  let regs = eventId ? DB.getRegistrantsByEvent(eventId) : DB.getRegistrants();
+  let regs = eventId ? await DB.getRegistrantsByEvent(eventId) : await DB.getRegistrants();
 
   const search = document.getElementById('search-registrant')?.value?.toLowerCase() || '';
   if (search) regs = regs.filter(r =>
-    r.name.toLowerCase().includes(search) ||
-    r.email.toLowerCase().includes(search) ||
+    (r.name || r.fullName || '').toLowerCase().includes(search) ||
+    (r.email || '').toLowerCase().includes(search) ||
     r.id.toLowerCase().includes(search)
   );
 
-  regs = regs.sort((a, b) => new Date(b.registeredAt) - new Date(a.registeredAt));
+  regs = regs.sort((a, b) => new Date(b.createdAt || b.registeredAt) - new Date(a.createdAt || a.registeredAt));
 
   if (!regs.length) {
     tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted" style="padding:3rem;">Tidak ada data peserta</td></tr>`;
     return;
   }
 
-  const events = DB.getEvents();
+  const events = await DB.getEvents();
   tbody.innerHTML = regs.map(r => {
     const ev = events.find(e => e.id === r.eventId);
     return `
       <tr>
         <td><span class="badge badge-violet" style="font-size:0.7rem;">${r.id}</span></td>
         <td>
-          <div class="font-semibold text-sm">${r.name}</div>
+          <div class="font-semibold text-sm">${r.fullName || r.name}</div>
           <div class="text-xs text-muted">${r.email}</div>
         </td>
         <td class="text-sm text-muted">${ev ? ev.name.substring(0, 30) + '…' : '-'}</td>
-        <td class="text-sm">${r.ticketType}</td>
-        <td class="text-xs text-muted">${formatDateTime(r.registeredAt)}</td>
+        <td class="text-sm">${r.ticketType || r.ticketId}</td>
+        <td class="text-xs text-muted">${formatDateTime(r.createdAt || r.registeredAt)}</td>
         <td>
           ${r.checkedIn
             ? `<span class="badge badge-green">✓ Check-in<br><span style="font-size:0.65rem;opacity:0.7;">${formatDateTime(r.checkedInAt)}</span></span>`
             : `<span class="badge badge-amber">⏳ Belum</span>`}
         </td>
         <td>
-          <a href="../ticket.html?id=${r.id}" target="_blank" class="btn btn-ghost btn-sm">🎫 Tiket</a>
+          <a href="/ticket?id=${r.id}" target="_blank" class="btn btn-ghost btn-sm">🎫 Tiket</a>
         </td>
       </tr>`;
   }).join('');
@@ -144,8 +149,8 @@ function renderRecentRegistrants(eventId = '') {
 let editingEventId = null;
 let editorGallery = [];
 
-function initEventManager() {
-  renderEventList();
+async function initEventManager() {
+  await renderEventList();
   document.getElementById('btn-new-event')?.addEventListener('click', () => openEventModal());
   document.getElementById('event-modal-overlay')?.addEventListener('click', (e) => {
     if (e.target.id === 'event-modal-overlay') closeEventModal();
@@ -156,18 +161,20 @@ function initEventManager() {
   initRichTextToolbar();
 }
 
-function renderEventList() {
+async function renderEventList() {
   const container = document.getElementById('events-list');
   if (!container) return;
-  const events = DB.getEvents();
+  const events = await DB.getEvents();
   if (!events.length) {
     container.innerHTML = `<div class="empty-state"><div class="empty-icon">📅</div><p>Belum ada event. Klik "+ Tambah Event" untuk memulai.</p></div>`;
     return;
   }
-  container.innerHTML = events.map(ev => {
-    const regs = DB.getRegistrantsByEvent(ev.id);
+  
+  let html = '';
+  for (const ev of events) {
+    const regs = await DB.getRegistrantsByEvent(ev.id);
     const checked = regs.filter(r => r.checkedIn).length;
-    return `
+    html += `
       <div class="card" style="display:flex;align-items:flex-start;gap:1.5rem;flex-wrap:wrap;">
         <div style="flex:1;min-width:200px;">
           <div class="flex items-center gap-1 mb-2">
@@ -181,14 +188,15 @@ function renderEventList() {
         </div>
         <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
           <button class="btn btn-ghost btn-sm" onclick="openEventModal('${ev.id}')">✏️ Edit</button>
-          <a href="../register.html?event=${ev.id}" target="_blank" class="btn btn-outline btn-sm">🔗 Form</a>
+          <a href="/register?event=${ev.id}" target="_blank" class="btn btn-outline btn-sm">🔗 Form</a>
           <button class="btn btn-danger btn-sm" onclick="deleteEventConfirm('${ev.id}')">🗑️</button>
         </div>
       </div>`;
-  }).join('');
+  }
+  container.innerHTML = html;
 }
 
-function openEventModal(eventId = null) {
+async function openEventModal(eventId = null) {
   editingEventId = eventId;
   editorGallery = [];
 
@@ -214,7 +222,7 @@ function openEventModal(eventId = null) {
   renderGalleryEditor([]);
 
   if (eventId) {
-    const ev = DB.getEvent(eventId);
+    const ev = await DB.getEvent(eventId);
     if (!ev) return;
     document.getElementById('ev-name').value = ev.name || '';
     document.getElementById('ev-description').value = ev.description || '';
@@ -243,7 +251,7 @@ function closeEventModal() {
   editorGallery = [];
 }
 
-function saveEvent() {
+async function saveEvent() {
   const name = document.getElementById('ev-name').value.trim();
   const date = document.getElementById('ev-date').value;
   const location = document.getElementById('ev-location').value.trim();
@@ -269,27 +277,26 @@ function saveEvent() {
     paymentInfo: document.getElementById('ev-payment-info')?.value.trim() || '',
     terms: document.getElementById('terms-editor').innerHTML,
     gallery: editorGallery,
-    createdAt: editingEventId ? DB.getEvent(editingEventId)?.createdAt : new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
 
-  DB.saveEvent(event);
+  await DB.saveEvent(event);
   showToast(`Event "${name}" berhasil ${editingEventId ? 'diperbarui' : 'ditambahkan'}`, 'success');
   closeEventModal();
-  renderEventList();
+  await renderEventList();
 }
 
-function deleteEventConfirm(eventId) {
-  const ev = DB.getEvent(eventId);
+async function deleteEventConfirm(eventId) {
+  const ev = await DB.getEvent(eventId);
   if (!ev) return;
-  const regs = DB.getRegistrantsByEvent(eventId).length;
-  const msg = regs > 0
-    ? `Event "${ev.name}" memiliki ${regs} peserta terdaftar. Hapus event ini? (Data peserta tetap tersimpan)`
+  const regs = await DB.getRegistrantsByEvent(eventId);
+  const msg = regs.length > 0
+    ? `Event "${ev.name}" memiliki ${regs.length} peserta terdaftar. Hapus event ini? (Data peserta tetap tersimpan)`
     : `Hapus event "${ev.name}"?`;
   if (confirm(msg)) {
-    DB.deleteEvent(eventId);
+    await DB.deleteEvent(eventId);
     showToast('Event berhasil dihapus', 'success');
-    renderEventList();
+    await renderEventList();
   }
 }
 
@@ -361,10 +368,10 @@ let lastScanCode = null;
 function initCheckin() {
   document.getElementById('btn-start-scan')?.addEventListener('click', startQRScanner);
   document.getElementById('btn-stop-scan')?.addEventListener('click', stopQRScanner);
-  document.getElementById('manual-checkin-form')?.addEventListener('submit', (e) => {
+  document.getElementById('manual-checkin-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const code = document.getElementById('manual-code-input').value.trim();
-    if (code) processCheckin(code);
+    if (code) await processCheckin(code);
   });
   renderScanLog();
 }
@@ -380,10 +387,10 @@ function startQRScanner() {
   scannerInstance.start(
     { facingMode: 'environment' },
     { fps: 10, qrbox: { width: 250, height: 250 } },
-    (decodedText) => {
+    async (decodedText) => {
       if (decodedText !== lastScanCode) {
         lastScanCode = decodedText;
-        processCheckin(decodedText);
+        await processCheckin(decodedText);
         setTimeout(() => { lastScanCode = null; }, 3000);
       }
     },
@@ -405,12 +412,12 @@ function stopQRScanner() {
   }
 }
 
-function processCheckin(qrCode) {
+async function processCheckin(qrCode) {
   const result = document.getElementById('checkin-result-area');
-  let registrant = DB.getRegistrantByQR(qrCode);
+  let registrant = await DB.getRegistrantByQR(qrCode);
 
   // Fallback: coba match by ID
-  if (!registrant) registrant = DB.getRegistrant(qrCode);
+  if (!registrant) registrant = await DB.getRegistrant(qrCode);
 
   if (!registrant) {
     if (result) result.innerHTML = `
@@ -424,7 +431,7 @@ function processCheckin(qrCode) {
     return;
   }
 
-  const ev = DB.getEvent(registrant.eventId);
+  const ev = await DB.getEvent(registrant.eventId);
 
   if (registrant.checkedIn) {
     if (result) result.innerHTML = `
@@ -446,7 +453,7 @@ function processCheckin(qrCode) {
   // Mark checked in
   registrant.checkedIn = true;
   registrant.checkedInAt = new Date().toISOString();
-  DB.saveRegistrant(registrant);
+  await DB.saveRegistrant(registrant);
 
   if (result) result.innerHTML = `
     <div class="checkin-result success">
