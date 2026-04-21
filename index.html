@@ -163,7 +163,6 @@
               <div class="event-price ${minPrice === 0 ? 'free' : ''}">
                 ${minPrice === 0 ? 'GRATIS' : 'Mulai ' + formatCurrency(minPrice)}
               </div>
-              <div class="text-xs text-muted">${regs.length} / ${totalQuota} peserta</div>
             </div>
             <button class="btn btn-primary btn-sm" ${isSoldOut ? 'disabled' : ''}>
               ${isSoldOut ? '🚫 Penuh' : '✨ Daftar'}

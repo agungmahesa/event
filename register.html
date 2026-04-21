@@ -206,11 +206,7 @@
           <h4 style="margin-bottom:0.75rem;color:var(--violet-light);">💳 Metode Pembayaran</h4>
           <div class="form-group" style="margin-bottom:0.75rem;">
             <select class="form-control" id="payment-method" onchange="onPaymentMethodChange()">
-              <option value="transfer_bca">Transfer Bank BCA</option>
-              <option value="transfer_mandiri">Transfer Bank Mandiri</option>
-              <option value="transfer_bni">Transfer Bank BNI</option>
-              <option value="qris">QRIS</option>
-              <option value="ovo">OVO / GoPay / Dana</option>
+              <option value="sedang_memuat">Memuat bank...</option>
             </select>
           </div>
           <div id="payment-info-box" style="background:rgba(255,255,255,0.04);border-radius:var(--radius-sm);padding:0.75rem;font-size:0.85rem;color:var(--text-secondary);line-height:1.6;"></div>
@@ -244,6 +240,7 @@
   let selectedEventId = null;
   let selectedTicket = null;
   let currentEvent = null;
+  let globalSettings = null;
 
   // Mobile drawer
   document.getElementById('hamburger-btn').addEventListener('click', () => {
@@ -258,10 +255,27 @@
     if (!selectedEventId) { window.location.href = '/'; return; }
     currentEvent = await DB.getEvent(selectedEventId);
     if (!currentEvent) { window.location.href = '/'; return; }
+    globalSettings = await DB.getSettings();
+
     document.title = `Daftar: ${currentEvent.name} — Matchaji Roadshow`;
     populateEventBanner();
     await populateTickets();
     populateTerms();
+    populatePaymentMethods();
+  }
+
+  function populatePaymentMethods() {
+    const pmSelect = document.getElementById('payment-method');
+    const banks = globalSettings?.banks?.filter(b => b.isActive) || [];
+    
+    if (banks.length === 0) {
+      pmSelect.innerHTML = '<option value="manual">Manual / Konfirmasi Panitia</option>';
+      return;
+    }
+    
+    pmSelect.innerHTML = banks.map(b => 
+      `<option value="${b.id}">${b.bankName} (a.n ${b.accountName})</option>`
+    ).join('');
   }
 
   function populateEventBanner() {
