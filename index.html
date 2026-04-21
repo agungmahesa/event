@@ -123,12 +123,12 @@
     }
     noEvents.classList.add('hidden');
 
-    // Fetch all registrants for these events to calculate quota in one go if possible,
-    // or keep it simple for now and await each count.
-    
+    // Fetch all registrants for these events concurrently for massive speedup
+    const registrantsData = await Promise.all(events.map(ev => DB.getRegistrantsByEvent(ev.id)));
+
     let html = '';
-    for (const ev of events) {
-      const regs = await DB.getRegistrantsByEvent(ev.id);
+    events.forEach((ev, i) => {
+      const regs = registrantsData[i];
       const firstImg = ev.gallery && ev.gallery.length ? ev.gallery[0] : null;
       const minPrice = ev.tickets?.reduce((min, t) => Math.min(min, t.price), Infinity) ?? 0;
       const totalQuota = ev.tickets?.reduce((s, t) => s + (t.quota || 0), 0) || ev.capacity;
@@ -140,13 +140,13 @@
         <div class="event-card" onclick="location.href='/register?event=${ev.id}'" id="event-${ev.id}">
           <div class="event-card-img">
             ${firstImg
-              ? `<img src="${firstImg}" alt="${ev.name}">`
-              : `<div class="event-card-img-placeholder">🎪</div>`}
+              ? \`<img src="\${firstImg}" alt="\${ev.name}">\`
+              : \`<div class="event-card-img-placeholder">🎪</div>\`}
             <div style="position:absolute;top:0.75rem;left:0.75rem;">
               <span class="badge ${getCategoryBadge(ev.category)}">${ev.category}</span>
             </div>
-            ${isSoldOut ? `<div style="position:absolute;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;">
-              <span class="badge badge-red" style="font-size:0.9rem;padding:0.4rem 1rem;">SOLD OUT</span></div>` : ''}
+            ${isSoldOut ? \`<div style="position:absolute;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;">
+              <span class="badge badge-red" style="font-size:0.9rem;padding:0.4rem 1rem;">SOLD OUT</span></div>\` : ''}
           </div>
           <div class="event-card-body">
             <div class="event-card-title">${ev.name}</div>
@@ -156,7 +156,7 @@
               <div class="event-meta-item">📍 ${ev.location}</div>
               <div class="event-meta-item">👤 ${ev.organizer || '-'}</div>
             </div>
-            ${isAlmostFull ? `<div class="badge badge-amber" style="align-self:flex-start;">🔥 Hampir Penuh (${pct}%)</div>` : ''}
+            ${isAlmostFull ? \`<div class="badge badge-amber" style="align-self:flex-start;">🔥 Hampir Penuh (\${pct}%)</div>\` : ''}
           </div>
           <div class="event-card-footer">
             <div>
@@ -168,8 +168,8 @@
               ${isSoldOut ? '🚫 Penuh' : '✨ Daftar'}
             </button>
           </div>
-        </div>`;
-    }
+        </div>\`;
+    });
     grid.innerHTML = html;
   }
 

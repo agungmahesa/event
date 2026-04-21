@@ -204,9 +204,11 @@ async function renderEventList() {
     return;
   }
   
+  const registrantsData = await Promise.all(events.map(ev => DB.getRegistrantsByEvent(ev.id)));
+
   let html = '';
-  for (const ev of events) {
-    const regs = await DB.getRegistrantsByEvent(ev.id);
+  events.forEach((ev, i) => {
+    const regs = registrantsData[i];
     const checked = regs.filter(r => r.checkedIn).length;
     html += `
       <div class="card" style="display:flex;align-items:flex-start;gap:1.5rem;flex-wrap:wrap;">
@@ -226,7 +228,7 @@ async function renderEventList() {
           <button class="btn btn-danger btn-sm" onclick="deleteEventConfirm('${ev.id}')">🗑️</button>
         </div>
       </div>`;
-  }
+  });
   container.innerHTML = html;
 }
 
@@ -314,7 +316,13 @@ async function saveEvent() {
     updatedAt: new Date().toISOString(),
   };
 
-  await DB.saveEvent(event);
+  const result = await DB.saveEvent(event);
+  if (!result) {
+    showToast(`Gagal menyimpan event. Periksa console untuk detail error.`, 'error');
+    console.error('saveEvent failed. Event payload:', event);
+    return;
+  }
+
   showToast(`Event "${name}" berhasil ${editingEventId ? 'diperbarui' : 'ditambahkan'}`, 'success');
   closeEventModal();
   await renderEventList();
