@@ -99,49 +99,59 @@ try {
 const DB = {
   // Events
   async getEvents() {
+    if (!supabase) return [];
     const { data, error } = await supabase.from('events').select('*').order('date', { ascending: true });
-    if (error) console.error(error);
+    if (error) { console.error('getEvents error:', error); return []; }
     return data || [];
   },
   async getEvent(id) {
-    const { data, error } = await supabase.from('events').select('*').eq('id', id).single();
-    if (error) console.error(error);
+    if (!supabase) return null;
+    const { data, error } = await supabase.from('events').select('*').eq('id', id).maybeSingle();
+    if (error) { console.error('getEvent error:', error); return null; }
     return data || null;
   },
   async saveEvent(event) {
-    const { data, error } = await supabase.from('events').upsert(event).select();
-    if (error) console.error(error);
+    if (!supabase) return null;
+    const row = { ...event, updatedAt: new Date().toISOString() };
+    const { data, error } = await supabase.from('events').upsert(row, { onConflict: 'id' }).select();
+    if (error) { console.error('saveEvent error:', error); return null; }
     return data ? data[0] : null;
   },
   async deleteEvent(id) {
+    if (!supabase) return;
     const { error } = await supabase.from('events').delete().eq('id', id);
-    if (error) console.error(error);
+    if (error) console.error('deleteEvent error:', error);
   },
 
   // Registrants
   async getRegistrants() {
-    const { data, error } = await supabase.from('registrants').select('*').order('createdAt', { ascending: false });
-    if (error) console.error(error);
+    if (!supabase) return [];
+    const { data, error } = await supabase.from('registrants').select('*').order('registeredAt', { ascending: false });
+    if (error) { console.error('getRegistrants error:', error); return []; }
     return data || [];
   },
   async getRegistrantsByEvent(eventId) {
+    if (!supabase) return [];
     const { data, error } = await supabase.from('registrants').select('*').eq('eventId', eventId);
-    if (error) console.error(error);
+    if (error) { console.error('getRegistrantsByEvent error:', error); return []; }
     return data || [];
   },
   async getRegistrant(id) {
-    const { data, error } = await supabase.from('registrants').select('*').eq('id', id).single();
-    if (error) console.error(error);
+    if (!supabase) return null;
+    const { data, error } = await supabase.from('registrants').select('*').eq('id', id).maybeSingle();
+    if (error) { console.error('getRegistrant error:', error); return null; }
     return data || null;
   },
   async getRegistrantByQR(qrCode) {
-    const { data, error } = await supabase.from('registrants').select('*').eq('qrCode', qrCode).single();
-    if (error) console.error(error);
+    if (!supabase) return null;
+    const { data, error } = await supabase.from('registrants').select('*').eq('qrCode', qrCode).maybeSingle();
+    if (error) { console.error('getRegistrantByQR error:', error); return null; }
     return data || null;
   },
   async saveRegistrant(reg) {
-    const { data, error } = await supabase.from('registrants').upsert(reg).select();
-    if (error) console.error(error);
+    if (!supabase) return null;
+    const { data, error } = await supabase.from('registrants').upsert(reg, { onConflict: 'id' }).select();
+    if (error) { console.error('saveRegistrant error:', error); return null; }
     return data ? data[0] : null;
   },
 
@@ -164,8 +174,9 @@ const DB = {
 
   // Payment management
   async getPendingPayments() {
+    if (!supabase) return [];
     const { data, error } = await supabase.from('registrants').select('*').eq('paymentStatus', 'pending');
-    if (error) console.error(error);
+    if (error) { console.error('getPendingPayments error:', error); return []; }
     return data || [];
   },
   async approvePayment(regId) {
@@ -194,20 +205,21 @@ const DB = {
 
   // Settings
   async getSettings() {
-    const { data, error } = await supabase.from('settings').select('*').eq('id', 'global').single();
-    if (data) {
-      return { ...DEFAULT_SETTINGS, ...data };
-    }
-    return { ...DEFAULT_SETTINGS };
+    if (!supabase) return { ...DEFAULT_SETTINGS };
+    const { data, error } = await supabase.from('settings').select('*').eq('id', 'global').maybeSingle();
+    if (error) { console.error('getSettings error:', error); }
+    return data ? { ...DEFAULT_SETTINGS, ...data } : { ...DEFAULT_SETTINGS };
   },
   async saveSettings(settings) {
+    if (!supabase) return;
     settings.id = 'global';
-    const { error } = await supabase.from('settings').upsert(settings);
-    if (error) console.error(error);
+    const { error } = await supabase.from('settings').upsert(settings, { onConflict: 'id' });
+    if (error) console.error('saveSettings error:', error);
   },
 
   // Upload payment proof
   async uploadPaymentProof(regId, base64Image) {
+    if (!supabase) return null;
     const reg = await this.getRegistrant(regId);
     if (!reg) return null;
     reg.paymentProof = base64Image;

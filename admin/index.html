@@ -243,6 +243,37 @@
 
   (async function init() {
     document.getElementById('last-updated').textContent = 'Terakhir update: ' + new Date().toLocaleString('id-ID');
+
+    // Show DB connection status
+    const statusEl = document.createElement('div');
+    statusEl.id = 'db-status-banner';
+    statusEl.style.cssText = 'margin-bottom:1rem;padding:0.6rem 1rem;border-radius:var(--radius-md);font-size:0.82rem;display:flex;align-items:center;gap:0.5rem;';
+    document.querySelector('.page-body').prepend(statusEl);
+
+    if (!supabase) {
+      statusEl.style.background = 'rgba(239,68,68,0.1)';
+      statusEl.style.border = '1px solid rgba(239,68,68,0.3)';
+      statusEl.innerHTML = '❌ <strong>Supabase tidak terhubung.</strong> Periksa koneksi internet atau konfigurasi API key.';
+    } else {
+      try {
+        const { error } = await supabase.from('events').select('id').limit(1);
+        if (error) {
+          statusEl.style.background = 'rgba(245,158,11,0.1)';
+          statusEl.style.border = '1px solid rgba(245,158,11,0.3)';
+          statusEl.innerHTML = `⚠️ <strong>Terhubung ke Supabase</strong>, tapi ada error: <code style="font-size:0.78rem;">${error.message}</code>`;
+        } else {
+          statusEl.style.background = 'rgba(16,185,129,0.08)';
+          statusEl.style.border = '1px solid rgba(16,185,129,0.25)';
+          statusEl.innerHTML = '✅ <strong>Supabase terhubung</strong> — data real-time aktif.';
+          setTimeout(() => statusEl.remove(), 4000);
+        }
+      } catch (e) {
+        statusEl.style.background = 'rgba(239,68,68,0.1)';
+        statusEl.style.border = '1px solid rgba(239,68,68,0.3)';
+        statusEl.innerHTML = `❌ <strong>Error koneksi:</strong> ${e.message}`;
+      }
+    }
+
     await renderStats();
     await renderPendingSection();
     await renderEventSummaryCards();
