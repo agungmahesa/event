@@ -115,21 +115,21 @@
       <!-- STEPS -->
       <div class="steps-bar" id="steps-bar">
         <div class="step-item active" data-step="1">
-          <div style="display:flex;flex-direction:column;align-items:center;">
+          <div class="step-icon-col">
             <div class="step-circle">1</div>
             <div class="step-label">Data Diri</div>
           </div>
           <div class="step-line"></div>
         </div>
         <div class="step-item" data-step="2">
-          <div style="display:flex;flex-direction:column;align-items:center;">
+          <div class="step-icon-col">
             <div class="step-circle">2</div>
             <div class="step-label">Tiket</div>
           </div>
           <div class="step-line"></div>
         </div>
         <div class="step-item" data-step="3">
-          <div style="display:flex;flex-direction:column;align-items:center;">
+          <div class="step-icon-col">
             <div class="step-circle">3</div>
             <div class="step-label">Konfirmasi</div>
           </div>
@@ -279,7 +279,7 @@
     document.getElementById('event-banner-loc').textContent = `📍 ${currentEvent.location}`;
     const imgEl = document.getElementById('event-banner-img');
     if (currentEvent.gallery?.length) {
-      imgEl.innerHTML = `<img src="${currentEvent.gallery[0]}" style="width:100%;height:100%;object-fit:cover;">`;
+      imgEl.innerHTML = `<img src="${currentEvent.gallery[0]}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.innerHTML='🍵';">`;
     }
   }
 
