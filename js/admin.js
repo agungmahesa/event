@@ -3,44 +3,46 @@
 // ================================================================
 
 // ---- AUTH & SECURITY CHECK ----
-// Hide body to prevent flash before auth resolves
+// Hide body early to prevent flash of unprotected content
 if (!window.location.pathname.endsWith('login')) {
   document.body.style.visibility = 'hidden';
 }
 
-// Failsafe: always show body after 5s to prevent permanent blank
+// Failsafe: show body after 6s no matter what
 const _authTimeout = setTimeout(() => {
   document.body.style.visibility = 'visible';
-}, 5000);
+}, 6000);
 
-(function checkAdminAuth() {
+(async function checkAdminAuth() {
   if (window.location.pathname.endsWith('login')) {
     clearTimeout(_authTimeout);
     return;
   }
 
-  if (!supabase || !supabase.auth) {
+  if (!supabase?.auth) {
     clearTimeout(_authTimeout);
     window.location.replace('/admin/login');
     return;
   }
 
-  // Use onAuthStateChange with INITIAL_SESSION — fires once with the
-  // definitive session state, even if restored from storage asynchronously.
-  let resolved = false;
-  const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-    if (resolved) return;
-    if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
-      resolved = true;
-      subscription.unsubscribe();
-      clearTimeout(_authTimeout);
-      if (!session) {
-        window.location.replace('/admin/login');
-      } else {
-        document.body.style.visibility = 'visible';
-      }
+  try {
+    // Give Supabase 300ms to restore session from localStorage before querying
+    await new Promise(r => setTimeout(r, 300));
+
+    const { data, error } = await supabase.auth.getSession();
+
+    clearTimeout(_authTimeout);
+    if (data?.session) {
+      document.body.style.visibility = 'visible';
+    } else {
+      window.location.replace('/admin/login');
     }
-  });
+  } catch (err) {
+    console.error('Auth check error:', err);
+    clearTimeout(_authTimeout);
+    // On error, show page rather than loop — avoids infinite redirect
+    document.body.style.visibility = 'visible';
+  }
 })();
 
 async function adminLogout() {
