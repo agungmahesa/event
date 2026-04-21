@@ -18,7 +18,7 @@
       </div>
       <div class="navbar-links">
         <a href="/" class="active">Beranda</a>
-        <a href="/register">Daftar</a>
+        <a href="https://matchaji.id" target="_blank">Matchaji.id ↗</a>
       </div>
     </div>
   </div>
@@ -46,18 +46,10 @@
 <!-- STATS BAR -->
 <section style="border-bottom:1px solid var(--border);padding:1.5rem 0;">
   <div class="container">
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1.5rem;text-align:center;">
+    <div style="display:flex;justify-content:center;text-align:center;">
       <div>
         <div class="font-bold" style="font-size:1.8rem;color:var(--violet-light);" id="hl-events">0</div>
         <div class="text-xs text-muted">Event Aktif</div>
-      </div>
-      <div>
-        <div class="font-bold" style="font-size:1.8rem;color:var(--cyan-light);" id="hl-regs">0</div>
-        <div class="text-xs text-muted">Total Peserta</div>
-      </div>
-      <div>
-        <div class="font-bold" style="font-size:1.8rem;color:var(--green-light);" id="hl-checked">0</div>
-        <div class="text-xs text-muted">Sudah Check-in</div>
       </div>
     </div>
   </div>
@@ -139,14 +131,12 @@
       html += `
         <div class="event-card" onclick="location.href='/register?event=${ev.id}'" id="event-${ev.id}">
           <div class="event-card-img">
-            ${firstImg
-              ? \`<img src="\${firstImg}" alt="\${ev.name}">\`
-              : \`<div class="event-card-img-placeholder">🎪</div>\`}
+            ${firstImg ? `<img src="${firstImg}" alt="${ev.name}">` : `<div class="event-card-img-placeholder">🎪</div>`}
             <div style="position:absolute;top:0.75rem;left:0.75rem;">
               <span class="badge ${getCategoryBadge(ev.category)}">${ev.category}</span>
             </div>
-            ${isSoldOut ? \`<div style="position:absolute;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;">
-              <span class="badge badge-red" style="font-size:0.9rem;padding:0.4rem 1rem;">SOLD OUT</span></div>\` : ''}
+            ${isSoldOut ? `<div style="position:absolute;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;">
+              <span class="badge badge-red" style="font-size:0.9rem;padding:0.4rem 1rem;">SOLD OUT</span></div>` : ''}
           </div>
           <div class="event-card-body">
             <div class="event-card-title">${ev.name}</div>
@@ -156,7 +146,7 @@
               <div class="event-meta-item">📍 ${ev.location}</div>
               <div class="event-meta-item">👤 ${ev.organizer || '-'}</div>
             </div>
-            ${isAlmostFull ? \`<div class="badge badge-amber" style="align-self:flex-start;">🔥 Hampir Penuh (\${pct}%)</div>\` : ''}
+            ${isAlmostFull ? `<div class="badge badge-amber" style="align-self:flex-start;">🔥 Hampir Penuh (${pct}%)</div>` : ''}
           </div>
           <div class="event-card-footer">
             <div>
@@ -168,7 +158,7 @@
               ${isSoldOut ? '🚫 Penuh' : '✨ Daftar'}
             </button>
           </div>
-        </div>\`;
+        </div>`;
     });
     grid.innerHTML = html;
   }
