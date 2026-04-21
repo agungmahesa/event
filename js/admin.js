@@ -3,16 +3,30 @@
 // ================================================================
 
 // ---- AUTH & SECURITY CHECK ----
-(function checkAdminAuth() {
-  if (!window.location.pathname.endsWith('login')) {
-    if (localStorage.getItem('evtreg_admin_auth') !== 'true') {
-      window.location.replace('/admin/login');
-    }
+// Hide body immediately to prevent flash of content before auth check
+if (!window.location.pathname.endsWith('login')) {
+  document.body.style.visibility = 'hidden';
+}
+
+(async function checkAdminAuth() {
+  if (window.location.pathname.endsWith('login')) return;
+
+  if (!supabase) {
+    // Supabase not loaded, can't verify - redirect to login
+    window.location.replace('/admin/login');
+    return;
+  }
+
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    window.location.replace('/admin/login');
+  } else {
+    document.body.style.visibility = 'visible';
   }
 })();
 
-function adminLogout() {
-  localStorage.removeItem('evtreg_admin_auth');
+async function adminLogout() {
+  if (supabase) await supabase.auth.signOut();
   window.location.replace('/admin/login');
 }
 

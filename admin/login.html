@@ -10,27 +10,29 @@
 
 <div style="width:100%;max-width:400px;padding:1.5rem;">
   <div style="text-align:center;margin-bottom:2rem;">
-    <div style="font-size:3rem;margin-bottom:0.5rem;">🍵</div>
+    <img src="../img/logo.png" alt="Matchaji" style="height:56px;margin-bottom:0.75rem;" onerror="this.style.display='none';document.getElementById('logo-fallback').style.display='block'">
+    <div id="logo-fallback" style="font-size:3rem;margin-bottom:0.5rem;display:none;">🍵</div>
     <h1 style="font-size:1.75rem;">Matchaji Roadshow Admin</h1>
     <p class="text-sm text-muted">Selamat datang! Silakan masuk ke panel admin.</p>
   </div>
 
   <div class="card" style="padding:2rem;">
+    <div id="login-error" style="display:none;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:var(--radius-md);padding:0.75rem 1rem;margin-bottom:1rem;font-size:0.85rem;color:var(--red);">
+      ❌ <span id="login-error-msg">Email atau password salah</span>
+    </div>
     <form id="login-form">
       <div class="form-group">
-        <label class="form-label">Username</label>
-        <input type="text" id="login-user" class="form-control" placeholder="Masukkan username" required autocomplete="username">
+        <label class="form-label">Email Admin</label>
+        <input type="email" id="login-email" class="form-control" placeholder="admin@matchaji.id" required autocomplete="email">
       </div>
       <div class="form-group" style="margin-bottom:1.5rem;">
         <label class="form-label">Password</label>
-        <input type="password" id="login-pass" class="form-control" placeholder="Masukkan password" required autocomplete="current-password">
+        <input type="password" id="login-pass" class="form-control" placeholder="Password" required autocomplete="current-password">
       </div>
       <button type="submit" class="btn btn-primary btn-full btn-lg" id="btn-login">Masuk ke Dashboard</button>
     </form>
-    
-
   </div>
-  
+
   <div style="text-align:center;margin-top:1.5rem;">
     <a href="/" class="btn btn-ghost btn-sm">← Kembali ke Website</a>
   </div>
@@ -40,33 +42,46 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/app.js"></script>
 <script>
-  // Cek jika sudah login
-  if (localStorage.getItem('evtreg_admin_auth') === 'true') {
-    window.location.replace('/admin');
-  }
+  // Redirect jika sudah punya session aktif
+  (async () => {
+    if (!supabase) return;
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) window.location.replace('/admin');
+  })();
 
-  document.getElementById('login-form').addEventListener('submit', (e) => {
+  document.getElementById('login-form').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const u = document.getElementById('login-user').value.trim();
-    const p = document.getElementById('login-pass').value.trim();
-    
-    const btn = document.getElementById('btn-login');
+    const email = document.getElementById('login-email').value.trim();
+    const pass  = document.getElementById('login-pass').value;
+
+    const btn     = document.getElementById('btn-login');
+    const errBox  = document.getElementById('login-error');
+    const errMsg  = document.getElementById('login-error-msg');
+
     btn.disabled = true;
     btn.textContent = 'Memverifikasi...';
+    errBox.style.display = 'none';
 
-    // Simulasi loading sebentar agar terasa interaktif
-    setTimeout(() => {
-      if (u.toLowerCase() === 'matcha.ji' && p === 'Travel101!') {
-        localStorage.setItem('evtreg_admin_auth', 'true');
-        showToast('Login berhasil!', 'success');
-        setTimeout(() => window.location.replace('/admin'), 800);
-      } else {
-        showToast('Username atau password salah', 'error');
-        btn.disabled = false;
-        btn.textContent = 'Masuk ke Dashboard';
-        document.getElementById('login-pass').value = '';
-      }
-    }, 600);
+    try {
+      if (!supabase) throw new Error('Koneksi database tidak tersedia.');
+
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password: pass });
+      if (error) throw error;
+
+      showToast('Login berhasil! Mengalihkan...', 'success');
+      setTimeout(() => window.location.replace('/admin'), 800);
+
+    } catch (err) {
+      const msg = err.message?.includes('Invalid login') || err.message?.includes('invalid_credentials')
+        ? 'Email atau password salah.'
+        : err.message || 'Login gagal. Coba lagi.';
+
+      errBox.style.display = 'block';
+      errMsg.textContent = msg;
+      btn.disabled = false;
+      btn.textContent = 'Masuk ke Dashboard';
+      document.getElementById('login-pass').value = '';
+    }
   });
 </script>
 </body>
