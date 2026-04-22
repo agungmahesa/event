@@ -236,7 +236,10 @@
             </div>
           </td>
           <td class="text-sm text-muted" style="max-width:130px;white-space:normal;line-height:1.3;">${ev ? ev.name.substring(0, 30) + '…' : '-'}</td>
-          <td class="text-sm">${r.ticketType}<br><span class="text-xs text-muted">${r.ticketPrice === 0 ? 'Gratis' : formatCurrency(r.ticketPrice)}</span></td>
+          <td class="text-sm">
+            ${r.ticketType} (${r.quantity || 1}x)<br>
+            <span class="text-xs text-muted">${r.ticketPrice === 0 ? 'Gratis' : formatCurrency(r.totalPrice || (r.ticketPrice * (r.quantity || 1)))}</span>
+          </td>
           <td>${payBadge[r.paymentStatus] || payBadge.pending}</td>
           <td style="text-align:center;">
             ${hasProof

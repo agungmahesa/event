@@ -162,13 +162,19 @@ const DB = {
     const checkedIn = registrants.filter(r => r.checkedIn).length;
     const pending = registrants.filter(r => r.paymentStatus === 'pending').length;
     const confirmed = registrants.filter(r => r.bookingStatus === 'confirmed').length;
+    
+    // Total head count/tickets
+    const totalTicketsSold = registrants.reduce((sum, r) => sum + (r.quantity || 1), 0);
+    const confirmedTickets = registrants.filter(r => r.bookingStatus === 'confirmed').reduce((sum, r) => sum + (r.quantity || 1), 0);
+
     return {
       totalEvents: events.length,
       totalRegistrants: registrants.length,
+      totalTicketsSold,
       checkedIn,
-      notCheckedIn: Math.max(0, confirmed - checkedIn),
+      notCheckedIn: Math.max(0, confirmedTickets - checkedIn),
       pendingPayment: pending,
-      confirmed,
+      confirmed: confirmedTickets,
     };
   },
 
@@ -289,7 +295,9 @@ function setUrlParam(key, value) {
 
 async function getRegistrantCount(eventId, ticketId) {
   const regs = await DB.getRegistrantsByEvent(eventId);
-  return regs.filter(r => r.ticketId === ticketId || r.ticketType === ticketId).length;
+  return regs
+    .filter(r => r.ticketId === ticketId || r.ticketType === ticketId)
+    .reduce((sum, r) => sum + (r.quantity || 1), 0);
 }
 
 async function getCheckinCount(eventId) {
@@ -389,7 +397,7 @@ const WA = {
 
   // Notification for Admin -> To User (Ticket Approved)
   async getTicketLink(reg, eventName) {
-    const text = `Halo ${reg.name},\n\nPembayaran Anda untuk ${eventName || 'Event Matchaji'} telah TERVERIFIKASI! ✅\n\nSilakan akses tiket digital Anda di sini untuk check-in di lokasi:\n${window.location.origin}/ticket?id=${reg.id}\n\nSampai jumpa di lokasi! 🍵`;
+    const text = `Halo ${reg.name},\n\nPembayaran Anda untuk ${eventName || 'Event Matchaji'} telah TERVERIFIKASI!\n\nSilakan akses tiket digital Anda di sini untuk check-in di lokasi:\n${window.location.origin}/ticket?id=${reg.id}\n\nSampai jumpa di lokasi!`;
     return this.buildLink(reg.phone, text);
   },
 

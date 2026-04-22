@@ -173,7 +173,22 @@
       <!-- STEP 2: Pilih Tiket -->
       <div class="card hidden" id="step-2">
         <h3 style="margin-bottom:1.25rem;">🎟️ Pilih Tiket</h3>
-        <div id="ticket-options" style="display:flex;flex-direction:column;gap:0.75rem;margin-bottom:1.25rem;"></div>
+        <div id="ticket-options" style="display:flex;flex-direction:column;gap:0.75rem;margin-bottom:1rem;"></div>
+
+        <!-- Quantity Selection -->
+        <div id="quantity-section" class="card" style="padding:1rem;background:rgba(255,255,255,0.03);border-style:dashed;">
+          <div style="display:flex;align-items:center;justify-content:between;">
+            <div style="flex:1;">
+              <div class="font-semibold text-sm">Jumlah Tiket</div>
+              <div class="text-xs text-muted">Maksimum 4 tiket per pendaftaran</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:1rem;">
+              <button type="button" class="btn btn-ghost" style="width:36px;height:36px;padding:0;border-radius:50%;" onclick="updateQuantity(-1)">−</button>
+              <span id="quantity-display" class="font-bold" style="font-size:1.2rem;width:20px;text-align:center;">1</span>
+              <button type="button" class="btn btn-ghost" style="width:36px;height:36px;padding:0;border-radius:50%;" onclick="updateQuantity(1)">+</button>
+            </div>
+          </div>
+        </div>
 
         <!-- S&K -->
         <div id="terms-section" style="display:none;margin-top:1.25rem;">
@@ -242,6 +257,7 @@
   let currentStep = 1;
   let selectedEventId = null;
   let selectedTicket = null;
+  let selectedQuantity = 1;
   let currentEvent = null;
   let globalSettings = null;
 
@@ -303,7 +319,7 @@
       html += `
         <label style="cursor:${soldOut?'not-allowed':'pointer'};opacity:${soldOut?0.5:1};display:block;">
           <input type="radio" name="ticket" value="${t.id}" data-price="${t.price}" data-name="${t.name}" ${soldOut?'disabled':''} onchange="selectTicket(this)" style="display:none;">
-          <div class="card" id="ticket-card-${t.id}" style="transition:var(--transition);cursor:${soldOut?'not-allowed':'pointer'};">
+          <div class="card ticket-card" id="ticket-card-${t.id}" style="transition:var(--transition);cursor:${soldOut?'not-allowed':'pointer'};">
             <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;">
               <div>
                 <div class="font-semibold">${t.name}</div>
@@ -317,6 +333,29 @@
         </label>`;
     }
     container.innerHTML = html;
+
+    // Auto-select first available ticket
+    const firstAvail = currentEvent.tickets.find(t => {
+      const isSoldOut = container.querySelector(`input[value="${t.id}"]`)?.disabled;
+      return !isSoldOut;
+    });
+    if (firstAvail) {
+      const radio = container.querySelector(`input[value="${firstAvail.id}"]`);
+      if (radio) {
+        radio.checked = true;
+        selectTicket(radio);
+      }
+    }
+  }
+
+  function updateQuantity(delta) {
+    const newVal = selectedQuantity + delta;
+    if (newVal >= 1 && newVal <= 4) {
+      selectedQuantity = newVal;
+      document.getElementById('quantity-display').textContent = selectedQuantity;
+    } else if (newVal > 4) {
+      showToast('Maksimum 4 tiket per pendaftaran', 'warning');
+    }
   }
 
   function selectTicket(radio) {
@@ -388,6 +427,7 @@
   }
 
   function buildConfirmSummary() {
+    const totalPrice = selectedTicket.price * selectedQuantity;
     const rows = [
       ['Nama', document.getElementById('reg-name').value],
       ['Email', document.getElementById('reg-email').value],
@@ -397,14 +437,15 @@
       ['Tanggal', formatDate(currentEvent.date)],
       ['Lokasi', currentEvent.location],
       ['Tiket', selectedTicket.name],
-      ['Harga', selectedTicket.price === 0 ? 'GRATIS' : formatCurrency(selectedTicket.price)],
+      ['Jumlah', `${selectedQuantity} tiket`],
+      ['Subtotal', selectedTicket.price === 0 ? 'GRATIS' : `${formatCurrency(selectedTicket.price)} x ${selectedQuantity}`],
     ];
     document.getElementById('confirm-details').innerHTML = rows.map(([k,v]) => `
       <div style="display:flex;justify-content:space-between;gap:0.75rem;font-size:0.85rem;padding:0.35rem 0;border-bottom:1px solid rgba(255,255,255,0.04);">
         <span class="text-muted">${k}</span>
         <strong style="text-align:right;color:var(--text-primary);word-break:break-word;max-width:60%;">${v}</strong>
       </div>`).join('');
-    document.getElementById('confirm-total-price').textContent = selectedTicket.price === 0 ? 'GRATIS' : formatCurrency(selectedTicket.price);
+    document.getElementById('confirm-total-price').textContent = totalPrice === 0 ? 'GRATIS' : formatCurrency(totalPrice);
   }
 
   function submitRegistration() {
@@ -427,6 +468,8 @@
         ticketType: selectedTicket.name,
         ticketId: selectedTicket.id,
         ticketPrice: selectedTicket.price,
+        quantity: selectedQuantity,
+        totalPrice: selectedTicket.price * selectedQuantity,
         paymentMethod: document.getElementById('payment-method').value,
         agreedToTerms: document.getElementById('agree-terms')?.checked || false,
         registeredAt: new Date().toISOString(),

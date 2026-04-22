@@ -201,8 +201,8 @@
             <div class="text-xs text-muted mt-1">${ev ? ev.name.substring(0,40) : '-'}</div>
             <div class="flex items-center gap-1 mt-1" style="flex-wrap:wrap;">
               <span class="badge badge-violet" style="font-size:0.65rem;">${r.id}</span>
-              <span class="badge badge-gray" style="font-size:0.65rem;">${r.ticketType || r.ticketId}</span>
-              <span class="badge badge-amber" style="font-size:0.65rem;">${formatCurrency(r.ticketPrice || 0)}</span>
+              <span class="badge badge-gray" style="font-size:0.65rem;">${r.ticketType || r.ticketId} (${r.quantity || 1}x)</span>
+              <span class="badge badge-amber" style="font-size:0.65rem;">${formatCurrency(r.totalPrice || (r.ticketPrice * (r.quantity || 1)))}</span>
               ${hasProof
                 ? `<span class="badge badge-green" style="font-size:0.65rem;cursor:pointer;" onclick="viewProofLightbox('${r.id}')">📎 Ada Bukti</span>`
                 : `<span class="badge badge-gray" style="font-size:0.65rem;">Belum ada bukti</span>`}
