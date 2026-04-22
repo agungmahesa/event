@@ -76,11 +76,6 @@ async function approvePayment(regId) {
   const reg = await DB.approvePayment(regId);
   if (reg) {
     showToast(`✅ Pembayaran ${reg.name} disetujui! Tiket aktif.`, 'success', 4000);
-    
-    // Trigger automatic ticket email
-    if (typeof window.sendAutomatedEmail === 'function') {
-      window.sendAutomatedEmail('ticket', reg);
-    }
 
     // Refresh all sections that exist on the current page
     if (typeof renderPendingSection === 'function') await renderPendingSection();
