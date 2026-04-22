@@ -149,10 +149,13 @@ const DB = {
     return data || null;
   },
   async saveRegistrant(reg) {
-    if (!supabase) return null;
+    if (!supabase) return { error: 'Supabase not initialized' };
     const { data, error } = await supabase.from('registrants').upsert(reg, { onConflict: 'id' }).select();
-    if (error) { console.error('saveRegistrant error:', error); return null; }
-    return data ? data[0] : null;
+    if (error) { 
+      console.error('saveRegistrant error:', error); 
+      return { error: error.message || 'Database error' }; 
+    }
+    return { data: data ? data[0] : null };
   },
 
   // Stats

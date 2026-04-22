@@ -180,7 +180,7 @@
           <div style="display:flex;align-items:center;justify-content:between;">
             <div style="flex:1;">
               <div class="font-semibold text-sm">Jumlah Tiket</div>
-              <div class="text-xs text-muted">Maksimum 4 tiket per pendaftaran</div>
+              <div class="text-xs text-muted">Maksimum 2 tiket per pendaftaran</div>
             </div>
             <div style="display:flex;align-items:center;gap:1rem;">
               <button type="button" class="btn btn-ghost" style="width:36px;height:36px;padding:0;border-radius:50%;" onclick="updateQuantity(-1)">−</button>
@@ -350,11 +350,11 @@
 
   function updateQuantity(delta) {
     const newVal = selectedQuantity + delta;
-    if (newVal >= 1 && newVal <= 4) {
+    if (newVal >= 1 && newVal <= 2) {
       selectedQuantity = newVal;
       document.getElementById('quantity-display').textContent = selectedQuantity;
-    } else if (newVal > 4) {
-      showToast('Maksimum 4 tiket per pendaftaran', 'warning');
+    } else if (newVal > 2) {
+      showToast('Maksimum 2 tiket per pendaftaran', 'warning');
     }
   }
 
@@ -480,13 +480,14 @@
       };
 
       const result = await DB.saveRegistrant(reg);
-      if (!result) {
-        showToast('Gagal menyimpan pendaftaran. Periksa koneksi Anda.', 'error');
+      if (result.error) {
+        showToast(`Gagal: ${result.error}. Pastikan tabel 'registrants' sudah memiliki kolom quantity & totalPrice.`, 'error', 7000);
         btn.disabled = false; btn.textContent = '🎉 Daftar Sekarang';
         return;
       }
 
       // Show success screen
+      const registrantId = result.data.id;
       document.getElementById('form-wrapper').classList.add('hidden');
       document.getElementById('success-screen').classList.remove('hidden');
       document.getElementById('success-reg-id').textContent = registrantId;
