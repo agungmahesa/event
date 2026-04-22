@@ -100,7 +100,7 @@ try {
 // EMAILJS CONFIGURATION
 // ========================
 // TODO: Replace these with your actual keys from emailjs.com
-const EMAILJS_PUBLIC_KEY = 'YOUR_PUBLIC_KEY_HERE';
+const EMAILJS_PUBLIC_KEY = 'oHhNbJuaGx9hFnx2w';
 const EMAILJS_SERVICE_ID = 'YOUR_SERVICE_ID_HERE';
 const EMAILJS_TEMPLATE_PAYMENT = 'YOUR_TEMPLATE_PAYMENT_HERE';
 const EMAILJS_TEMPLATE_TICKET = 'YOUR_TEMPLATE_TICKET_HERE';
