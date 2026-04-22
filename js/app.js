@@ -95,8 +95,6 @@ try {
   window.supabase = null;
 }
 
-}
-
 // ---- DB HELPERS ----
 const DB = {
   // Events
