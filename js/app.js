@@ -389,9 +389,25 @@ const WA = {
 
   // Notification for Admin -> To User (Ticket Approved)
   async getTicketLink(reg, eventName) {
-    const qrImageLink = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${reg.qrCode || reg.id}`;
-    const text = `Halo ${reg.name},\n\nPembayaran Anda untuk ${eventName || 'Event Matchaji'} telah TERVERIFIKASI! ✅\n\nSilakan akses tiket digital Anda di sini untuk check-in di lokasi:\n${window.location.origin}/ticket?id=${reg.id}\n\nAtau gunakan QR Code ini langsung:\n${qrImageLink}\n\nSampai jumpa di lokasi! 🍵`;
+    const text = `Halo ${reg.name},\n\nPembayaran Anda untuk ${eventName || 'Event Matchaji'} telah TERVERIFIKASI! ✅\n\nSilakan akses tiket digital Anda di sini untuk check-in di lokasi:\n${window.location.origin}/ticket?id=${reg.id}\n\nSampai jumpa di lokasi! 🍵`;
     return this.buildLink(reg.phone, text);
+  },
+
+  // Copy QR Image to Clipboard (PNG only supported by browser clipboard API)
+  async copyQRToClipboard(qrCode) {
+    if (!qrCode) return false;
+    try {
+      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${qrCode}&format=png`;
+      const response = await fetch(qrUrl);
+      const blob = await response.blob();
+      await navigator.clipboard.write([
+        new ClipboardItem({ [blob.type]: blob })
+      ]);
+      return true;
+    } catch (err) {
+      console.error('Failed to copy image:', err);
+      return false;
+    }
   }
 };
 
