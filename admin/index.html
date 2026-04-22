@@ -181,10 +181,20 @@
     }
 
     const events = await DB.getEvents();
-    container.innerHTML = pending.map(r => {
+    const settings = await DB.getSettings();
+    let cardsHtml = '';
+    
+    for (const r of pending) {
       const ev = events.find(e => e.id === r.eventId);
       const hasProof = !!r.paymentProof;
-      return `
+      
+      // Build WA link for instructions
+      let waLink = '#';
+      if (typeof WA !== 'undefined') {
+        waLink = await WA.getPaymentInstructionsLink(r, settings);
+      }
+
+      cardsHtml += `
         <div class="pending-card mb-1">
           <div class="pending-card-info">
             <div class="font-semibold text-sm">${r.fullName || r.name}</div>
@@ -201,12 +211,14 @@
             <div class="text-xs text-muted mt-1">Daftar: ${formatDateTime(r.createdAt || r.registeredAt)}</div>
           </div>
           <div class="pending-card-actions">
+            ${r.phone ? `<a href="${waLink}" target="_blank" class="btn btn-ghost btn-sm" style="color:#25D366;font-size:1.1rem;padding:0 0.5rem;" title="Kirim Instruksi WA">💬</a>` : ''}
             ${hasProof ? `<button class="btn btn-ghost btn-sm" onclick="viewProofLightbox('${r.id}')">📎</button>` : ''}
             <button class="btn btn-success btn-sm" onclick="approvePayment('${r.id}')">✅ Approve</button>
             <button class="btn btn-danger btn-sm" onclick="openRejectModal('${r.id}')">🚫</button>
           </div>
         </div>`;
-    }).join('');
+    }
+    container.innerHTML = cardsHtml;
   }
 
   async function viewProofLightbox(regId) {

@@ -92,8 +92,11 @@
       </div>
 
       <div style="display:flex;flex-direction:column;gap:0.75rem;">
+        <a id="whatsapp-confirm-btn" href="#" target="_blank" class="btn btn-green btn-full btn-lg" style="background:#25D366;border-color:#25D366;color:#fff;">
+          <span style="font-size:1.2rem;margin-right:0.4rem;">💬</span> Dapatkan Instruksi via WhatsApp
+        </a>
         <a id="view-ticket-btn" href="#" class="btn btn-primary btn-full btn-lg">🍵 Lihat Status Tiket</a>
-        <a href="/" class="btn btn-ghost btn-full">← Lihat Event Lain</a>
+        <a href="/" class="btn btn-ghost btn-full">Kembali ke Beranda</a>
       </div>
     </div>
 
@@ -455,6 +458,17 @@
       document.getElementById('success-screen').classList.remove('hidden');
       document.getElementById('success-reg-id').textContent = registrantId;
       document.getElementById('view-ticket-btn').href = `/ticket?id=${registrantId}`;
+      
+      // Setup WhatsApp button
+      const waBtn = document.getElementById('whatsapp-confirm-btn');
+      if (typeof WA !== 'undefined') {
+        const waLink = await WA.getAdminInstruksiLink({ ...reg, eventName: currentEvent?.name }, globalSettings);
+        waBtn.href = waLink;
+        if (isFree) {
+          waBtn.innerHTML = '<span style="font-size:1.2rem;margin-right:0.4rem;">💬</span> Konfirmasi via WhatsApp';
+        }
+      }
+
       document.getElementById('payment-instructions').textContent =
         currentEvent?.paymentInfo || 'Tim panitia akan menghubungi informasi pembayaran via WhatsApp/Email.';
 

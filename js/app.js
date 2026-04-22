@@ -94,7 +94,6 @@ try {
   console.error('Supabase init failed:', e.message);
   window.supabase = null;
 }
-}
 
 // ========================
 // EMAILJS CONFIGURATION
@@ -406,6 +405,49 @@ async function exportCSV(eventId) {
   a.click(); URL.revokeObjectURL(url);
   showToast('CSV berhasil diunduh', 'success');
 }
+
+// ---- WHATSAPP HELPERS ----
+const WA = {
+  // Helper to format phone for WhatsApp (ensure it starts with 62 or 08 -> 628)
+  formatPhone(phone) {
+    if (!phone) return '';
+    let p = String(phone).replace(/\D/g, '');
+    if (p.startsWith('0')) p = '62' + p.substring(1);
+    if (p.startsWith('8')) p = '62' + p;
+    return p;
+  },
+  
+  // Build wa.me link
+  buildLink(phone, text) {
+    const p = this.formatPhone(phone);
+    if (!p) return '#';
+    return `https://wa.me/${p}?text=${encodeURIComponent(text)}`;
+  },
+
+  // Notification for User (Success Registration) -> To Admin
+  async getAdminInstruksiLink(reg, settings) {
+    const adminWA = settings?.adminWhatsapp || '628123456789';
+    const text = `Halo Matchaji, saya ${reg.name} baru mendaftar untuk event: ${reg.eventName || 'Roadshow'}. Mohon instruksi pembayaran untuk ID: ${reg.id}.\n\nTerima kasih.`;
+    return this.buildLink(adminWA, text);
+  },
+
+  // Notification for Admin -> To User (Payment Pending)
+  async getPaymentInstructionsLink(reg, settings) {
+    const bankInfo = settings?.banks?.filter(b => b.isActive).map(b => `- ${b.bankName}: ${b.accountNo} (a.n ${b.accountName})`).join('\n') || '-';
+    const text = `Halo ${reg.name},\n\nPendaftaran Anda di Matchaji Roadshow sudah kami terima. Silakan lakukan pembayaran tiket ${reg.ticketType} senilai Rp ${reg.ticketPrice?.toLocaleString('id-ID')} ke salah satu rekening berikut:\n\n${bankInfo}\n\nMohon konfirmasi jika sudah transfer ya! Terima kasih.`;
+    return this.buildLink(reg.phone, text);
+  },
+
+  // Notification for Admin -> To User (Ticket Approved)
+  async getTicketLink(reg, eventName) {
+    const text = `Halo ${reg.name},\n\nPembayaran Anda untuk ${eventName || 'Event Matchaji'} telah TERVERIFIKASI! ✅\n\nSilakan akses tiket digital Anda di sini untuk check-in di lokasi:\n${window.location.origin}/ticket?id=${reg.id}\n\nSampai jumpa di lokasi! 🍵`;
+    return this.buildLink(reg.phone, text);
+  }
+};
+
+// Global exports
+window.DB = DB;
+window.WA = WA;
 
 // Init
 DB.seed();

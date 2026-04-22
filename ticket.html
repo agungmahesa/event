@@ -208,6 +208,9 @@
         </div>
 
         <div style="display:flex;gap:0.75rem;flex-direction:column;margin-top:1.5rem;">
+          <a id="wa-support-btn" href="#" target="_blank" class="btn btn-full btn-lg" style="background:#25D366;border-color:#25D366;color:#fff;display:none;">
+            <span style="font-size:1.2rem;margin-right:0.4rem;">💬</span> Chat Admin / Bantuan
+          </a>
           <button class="btn btn-primary btn-full btn-lg" onclick="shareTicket()">📤 Bagikan / Simpan Tiket</button>
           <a href="/" class="btn btn-ghost btn-full">← Beranda</a>
         </div>
@@ -291,6 +294,17 @@
 
   async function renderBankInfo(event) {
     const settings = await DB.getSettings();
+    
+    // Setup WA Support link
+    const waBtns = document.querySelectorAll('#wa-support-btn');
+    if (typeof WA !== 'undefined') {
+      const adminWA = settings.adminWhatsapp || '628123456789';
+      waBtns.forEach(btn => {
+        btn.href = WA.buildLink(adminWA, `Halo Admin Matchaji, saya butuh bantuan terkait tiket saya (ID: ${currentRegId})`);
+        btn.style.display = 'flex';
+      });
+    }
+
     const banks = settings.banks?.filter(b => b.isActive) || [];
     // Also check event-specific payment info
     const eventPayInfo = event?.paymentInfo || '';
