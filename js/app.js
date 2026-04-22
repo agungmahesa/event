@@ -94,6 +94,58 @@ try {
   console.error('Supabase init failed:', e.message);
   window.supabase = null;
 }
+}
+
+// ========================
+// EMAILJS CONFIGURATION
+// ========================
+// TODO: Replace these with your actual keys from emailjs.com
+const EMAILJS_PUBLIC_KEY = 'YOUR_PUBLIC_KEY_HERE';
+const EMAILJS_SERVICE_ID = 'YOUR_SERVICE_ID_HERE';
+const EMAILJS_TEMPLATE_PAYMENT = 'YOUR_TEMPLATE_PAYMENT_HERE';
+const EMAILJS_TEMPLATE_TICKET = 'YOUR_TEMPLATE_TICKET_HERE';
+
+window.sendAutomatedEmail = async function(type, data) {
+  if (EMAILJS_PUBLIC_KEY === 'YOUR_PUBLIC_KEY_HERE') {
+    console.warn('EmailJS keys not configured. Skipping email dispatch.', type);
+    return;
+  }
+  try {
+    const templateId = type === 'payment' ? EMAILJS_TEMPLATE_PAYMENT : EMAILJS_TEMPLATE_TICKET;
+    let eventName = data.eventName;
+    // auto-fetch eventName if not provided
+    if (!eventName && window.DB && data.eventId) {
+      const ev = await window.DB.getEvent(data.eventId);
+      if (ev) eventName = ev.name;
+    }
+    
+    // Map properties to match EmailJS template variables
+    const templateParams = {
+      user_name: data.name,
+      user_email: data.email,
+      ticket_id: data.id,
+      event_name: eventName || 'Matchaji Event',
+      ticket_type: data.ticketType,
+      qr_link: `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${data.qrCode}`,
+      ticket_link: `${window.location.origin}/ticket?id=${data.id}`
+    };
+    
+    // Initialize if not already initialized
+    if (window.emailjs && !window.emailjs._initialized) {
+      window.emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+      window.emailjs._initialized = true;
+    }
+
+    if (window.emailjs) {
+      await window.emailjs.send(EMAILJS_SERVICE_ID, templateId, templateParams);
+      console.log(`[EmailJS] Email '${type}' terkirim ke ${data.email}`);
+    } else {
+      console.error('EmailJS SDK not loaded.');
+    }
+  } catch (err) {
+    console.error('Gagal mengirim email via EmailJS:', err);
+  }
+}
 
 // ---- DB HELPERS ----
 const DB = {
