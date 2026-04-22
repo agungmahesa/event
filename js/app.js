@@ -376,14 +376,14 @@ const WA = {
   // Notification for User (Success Registration) -> To Admin
   async getAdminInstruksiLink(reg, settings) {
     const adminWA = settings?.adminWhatsapp || '628123456789';
-    const text = `Halo Matchaji, saya ${reg.name} baru mendaftar untuk event: ${reg.eventName || 'Roadshow'}. Mohon instruksi pembayaran untuk ID: ${reg.id}.\n\nTerima kasih.`;
+    const text = `Halo Matchaji, saya ${reg.name} baru mendaftar untuk event: ${reg.eventName || 'Roadshow'}. Mohon instruksi pembayaran untuk ID: ${reg.id}.\n\nCek detail pendaftaran saya di: ${window.location.origin}/ticket?id=${reg.id}\n\nTerima kasih.`;
     return this.buildLink(adminWA, text);
   },
 
   // Notification for Admin -> To User (Payment Pending)
   async getPaymentInstructionsLink(reg, settings) {
     const bankInfo = settings?.banks?.filter(b => b.isActive).map(b => `- ${b.bankName}: ${b.accountNo} (a.n ${b.accountName})`).join('\n') || '-';
-    const text = `Halo ${reg.name},\n\nPendaftaran Anda di Matchaji Roadshow sudah kami terima. Silakan lakukan pembayaran tiket ${reg.ticketType} senilai Rp ${reg.ticketPrice?.toLocaleString('id-ID')} ke salah satu rekening berikut:\n\n${bankInfo}\n\nMohon konfirmasi jika sudah transfer ya! Terima kasih.`;
+    const text = `Halo ${reg.name},\n\nPendaftaran Anda di Matchaji Roadshow sudah kami terima. Silakan lakukan pembayaran tiket ${reg.ticketType} senilai Rp ${reg.ticketPrice?.toLocaleString('id-ID')} ke salah satu rekening berikut:\n\n${bankInfo}\n\nDetail pendaftaran & cara upload bukti bayar: ${window.location.origin}/ticket?id=${reg.id}\n\nMohon konfirmasi jika sudah transfer ya! Terima kasih.`;
     return this.buildLink(reg.phone, text);
   },
 
