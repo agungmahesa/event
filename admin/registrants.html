@@ -213,7 +213,7 @@
         let waLabel = 'Chat';
         if (typeof WA !== 'undefined') {
           if (r.paymentStatus === 'pending') {
-            waLink = WA.buildLink(r.phone, `Halo ${r.name}, pendaftaran Anda di ${ev?.name || 'Roadshow'} sudah kami terima. Silakan transfer ke rekening yang tertera di sistem. ID Anda: ${r.id}`);
+            waLink = await WA.getPaymentInstructionsLink(r, settings);
             waLabel = 'Kirim Instruksi';
           } else {
             waLink = await WA.getTicketLink(r, ev?.name);

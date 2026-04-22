@@ -389,7 +389,8 @@ const WA = {
 
   // Notification for Admin -> To User (Ticket Approved)
   async getTicketLink(reg, eventName) {
-    const text = `Halo ${reg.name},\n\nPembayaran Anda untuk ${eventName || 'Event Matchaji'} telah TERVERIFIKASI! ✅\n\nSilakan akses tiket digital Anda di sini untuk check-in di lokasi:\n${window.location.origin}/ticket?id=${reg.id}\n\nSampai jumpa di lokasi! 🍵`;
+    const qrImageLink = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${reg.qrCode || reg.id}`;
+    const text = `Halo ${reg.name},\n\nPembayaran Anda untuk ${eventName || 'Event Matchaji'} telah TERVERIFIKASI! ✅\n\nSilakan akses tiket digital Anda di sini untuk check-in di lokasi:\n${window.location.origin}/ticket?id=${reg.id}\n\nAtau gunakan QR Code ini langsung:\n${qrImageLink}\n\nSampai jumpa di lokasi! 🍵`;
     return this.buildLink(reg.phone, text);
   }
 };
