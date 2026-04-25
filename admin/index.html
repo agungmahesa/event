@@ -203,6 +203,7 @@
               <span class="badge badge-violet" style="font-size:0.65rem;">${r.id}</span>
               <span class="badge badge-gray" style="font-size:0.65rem;">${r.ticketType || r.ticketId} (${r.quantity || 1}x)</span>
               <span class="badge badge-amber" style="font-size:0.65rem;">${formatCurrency(r.totalPrice || (r.ticketPrice * (r.quantity || 1)))}</span>
+              ${r.promoCode ? `<span class="badge badge-gray" style="font-size:0.65rem;border:1px dashed var(--amber);">🎟️ ${r.promoCode.toUpperCase()}</span>` : ''}
               ${hasProof
                 ? `<span class="badge badge-green" style="font-size:0.65rem;cursor:pointer;" onclick="viewProofLightbox('${r.id}')">📎 Ada Bukti</span>`
                 : `<span class="badge badge-gray" style="font-size:0.65rem;">Belum ada bukti</span>`}

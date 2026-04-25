@@ -358,11 +358,14 @@
       // Fill details
       const rows = [
         ['Nama', reg.name], ['Email', reg.email],
-        ['Event', ev ? ev.name : '-'], ['Tiket', reg.ticketType],
-        ['Total', reg.ticketPrice === 0 ? 'GRATIS' : formatCurrency(reg.ticketPrice)],
-        ['Metode Bayar', reg.paymentMethod || '-'],
-        ['ID Registrasi', reg.id],
+        ['Event', ev ? ev.name : '-'], ['Tiket', `${reg.ticketType} (${reg.quantity || 1}x)`],
+        ['Total', reg.totalPrice !== undefined ? formatCurrency(reg.totalPrice) : (reg.ticketPrice === 0 ? 'GRATIS' : formatCurrency(reg.ticketPrice * (reg.quantity || 1)))],
       ];
+      if (reg.discountAmount > 0) {
+        rows.push(['Potongan Promo', `-${formatCurrency(reg.discountAmount)}`]);
+      }
+      rows.push(['Metode Bayar', reg.paymentMethod || '-']);
+      rows.push(['ID Registrasi', reg.id]);
       document.getElementById('pending-details').innerHTML = rows.map(([k,v]) => `
         <div style="display:flex;justify-content:space-between;gap:0.5rem;font-size:0.82rem;padding:0.35rem 0;border-bottom:1px solid rgba(255,255,255,0.04);">
           <span class="text-muted" style="flex-shrink:0;">${k}</span>
