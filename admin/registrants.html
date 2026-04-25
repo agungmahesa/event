@@ -239,6 +239,7 @@
           <td class="text-sm">
             ${r.ticketType} (${r.quantity || 1}x)<br>
             <span class="text-xs text-muted">${r.ticketPrice === 0 ? 'Gratis' : formatCurrency(r.totalPrice || (r.ticketPrice * (r.quantity || 1)))}</span>
+            ${r.promoCode ? `<br><span class="badge" style="background:var(--amber);color:#fff;font-size:0.6rem;padding:0.1rem 0.3rem;margin-top:0.2rem;display:inline-block;">🎟️ ${r.promoCode.toUpperCase()} (-${formatCurrency(r.discountAmount)})</span>` : ''}
           </td>
           <td>${payBadge[r.paymentStatus] || payBadge.pending}</td>
           <td style="text-align:center;">

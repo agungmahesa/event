@@ -233,6 +233,16 @@
           </div>
         </div>
 
+        <!-- Promo Code -->
+        <div style="margin-bottom:1.25rem;">
+          <label class="form-label" for="promo-code">Punya Kode Promo?</label>
+          <div style="display:flex;gap:0.5rem;">
+            <input type="text" id="promo-code" class="form-control" placeholder="Contoh: PROMO10" style="text-transform:uppercase;">
+            <button type="button" class="btn btn-ghost" id="btn-apply-promo" onclick="applyPromoCode()" style="white-space:nowrap;padding:0 1rem;">Gunakan</button>
+          </div>
+          <div id="promo-msg" class="text-xs mt-1" style="display:none;"></div>
+        </div>
+
         <div style="display:flex;justify-content:space-between;align-items:center;padding:0.75rem 0;border-top:1px solid var(--border);margin-bottom:1.25rem;">
           <span class="font-semibold">Total Pembayaran</span>
           <span class="font-bold" style="font-size:1.2rem;color:var(--violet-light);" id="confirm-total-price">Rp 0</span>
@@ -258,6 +268,7 @@
   let selectedEventId = null;
   let selectedTicket = null;
   let selectedQuantity = 1;
+  let appliedPromo = null;
   let currentEvent = null;
   let globalSettings = null;
 
@@ -380,6 +391,49 @@
     document.getElementById('payment-info-box').textContent = info;
   }
 
+  function applyPromoCode() {
+    const codeInput = document.getElementById('promo-code');
+    const code = codeInput.value.trim().toLowerCase();
+    const msgEl = document.getElementById('promo-msg');
+    
+    msgEl.style.display = 'block';
+    
+    if (!code) {
+      msgEl.textContent = 'Silakan masukkan kode promo.';
+      msgEl.style.color = 'var(--red)';
+      appliedPromo = null;
+      buildConfirmSummary();
+      return;
+    }
+
+    // Promo Code: sisterpadel
+    // Discount: 10%
+    // Valid until: 27 May 2026 (Updated from 2025 because current year is 2026)
+    const promoCode = 'sisterpadel';
+    const expiryDate = new Date('2026-05-27T23:59:59'); 
+    const now = new Date();
+
+    if (code === promoCode) {
+      if (now > expiryDate) {
+        msgEl.textContent = 'Maaf, kode promo ini sudah kadaluarsa (27 Mei 2026).';
+        msgEl.style.color = '#ef4444';
+        appliedPromo = null;
+      } else {
+        msgEl.textContent = 'Selamat! Potongan 10% berhasil digunakan.';
+        msgEl.style.color = '#10b981';
+        appliedPromo = { code: promoCode, discount: 0.1 };
+        codeInput.readOnly = true;
+        document.getElementById('btn-apply-promo').disabled = true;
+      }
+    } else {
+      msgEl.textContent = 'Kode promo tidak valid.';
+      msgEl.style.color = '#ef4444';
+      appliedPromo = null;
+    }
+    
+    buildConfirmSummary();
+  }
+
   function goStep(step) {
     if (step === 2) {
       const name = document.getElementById('reg-name').value.trim();
@@ -427,7 +481,13 @@
   }
 
   function buildConfirmSummary() {
-    const totalPrice = selectedTicket.price * selectedQuantity;
+    let subtotal = selectedTicket.price * selectedQuantity;
+    let discountAmount = 0;
+    if (appliedPromo) {
+      discountAmount = Math.round(subtotal * appliedPromo.discount);
+    }
+    let totalPrice = subtotal - discountAmount;
+
     const rows = [
       ['Nama', document.getElementById('reg-name').value],
       ['Email', document.getElementById('reg-email').value],
@@ -440,6 +500,11 @@
       ['Jumlah', `${selectedQuantity} tiket`],
       ['Subtotal', selectedTicket.price === 0 ? 'GRATIS' : `${formatCurrency(selectedTicket.price)} x ${selectedQuantity}`],
     ];
+
+    if (discountAmount > 0) {
+      rows.push(['Potongan Promo (' + appliedPromo.code.toUpperCase() + ')', `-${formatCurrency(discountAmount)}`]);
+    }
+
     document.getElementById('confirm-details').innerHTML = rows.map(([k,v]) => `
       <div style="display:flex;justify-content:space-between;gap:0.75rem;font-size:0.85rem;padding:0.35rem 0;border-bottom:1px solid rgba(255,255,255,0.04);">
         <span class="text-muted">${k}</span>
@@ -455,6 +520,9 @@
       const registrantId = generateId('REG');
       const qrCode = generateId('QR');
       const isFree = selectedTicket.price === 0;
+      const subtotal = selectedTicket.price * selectedQuantity;
+      const discount = appliedPromo ? Math.round(subtotal * appliedPromo.discount) : 0;
+      const finalPrice = subtotal - discount;
 
       const reg = {
         id: registrantId,
@@ -469,7 +537,10 @@
         ticketId: selectedTicket.id,
         ticketPrice: selectedTicket.price,
         quantity: selectedQuantity,
-        totalPrice: selectedTicket.price * selectedQuantity,
+        subtotal: subtotal,
+        promoCode: appliedPromo ? appliedPromo.code : null,
+        discountAmount: discount,
+        totalPrice: finalPrice,
         paymentMethod: document.getElementById('payment-method').value,
         agreedToTerms: document.getElementById('agree-terms')?.checked || false,
         registeredAt: new Date().toISOString(),
