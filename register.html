@@ -391,10 +391,11 @@
     document.getElementById('payment-info-box').textContent = info;
   }
 
-  function applyPromoCode() {
+  async function applyPromoCode() {
     const codeInput = document.getElementById('promo-code');
     const code = codeInput.value.trim().toLowerCase();
     const msgEl = document.getElementById('promo-msg');
+    const btn = document.getElementById('btn-apply-promo');
     
     msgEl.style.display = 'block';
     
@@ -406,14 +407,11 @@
       return;
     }
 
-    // Promo Code: sisterpadel
-    // Discount: 10%
-    // Valid until: 27 May 2026 (Updated from 2025 because current year is 2026)
-    const promoCode = 'sisterpadel';
-    const expiryDate = new Date('2026-05-27T23:59:59'); 
     const now = new Date();
-
-    if (code === promoCode) {
+    
+    // Promo 1: sisterpadel (10% Off)
+    if (code === 'sisterpadel') {
+      const expiryDate = new Date('2026-05-27T23:59:59'); 
       if (now > expiryDate) {
         msgEl.textContent = 'Maaf, kode promo ini sudah kadaluarsa (27 Mei 2026).';
         msgEl.style.color = '#ef4444';
@@ -421,11 +419,37 @@
       } else {
         msgEl.textContent = 'Selamat! Potongan 10% berhasil digunakan.';
         msgEl.style.color = '#10b981';
-        appliedPromo = { code: promoCode, discount: 0.1 };
+        appliedPromo = { code: 'sisterpadel', discount: 0.1 };
         codeInput.readOnly = true;
-        document.getElementById('btn-apply-promo').disabled = true;
+        btn.disabled = true;
       }
-    } else {
+    } 
+    // Promo 2: MATC101XL (100% Off, Quota 10)
+    else if (code === 'matc101xl') {
+      btn.disabled = true; btn.textContent = '⏳...';
+      try {
+        const regs = await DB.getRegistrants();
+        const usageCount = regs.filter(r => r.promoCode?.toLowerCase() === 'matc101xl').length;
+        
+        if (usageCount >= 10) {
+          msgEl.textContent = 'Maaf, kuota promo MATC101XL sudah habis (Maks 10).';
+          msgEl.style.color = '#ef4444';
+          appliedPromo = null;
+          btn.disabled = false; btn.textContent = 'Gunakan';
+        } else {
+          msgEl.textContent = 'Berhasil! Potongan 100% (GRATIS) telah diterapkan.';
+          msgEl.style.color = '#10b981';
+          appliedPromo = { code: 'matc101xl', discount: 1.0 };
+          codeInput.readOnly = true;
+          btn.textContent = 'Gunakan';
+        }
+      } catch (err) {
+        msgEl.textContent = 'Gagal mengecek kuota promo. Silakan coba lagi.';
+        msgEl.style.color = '#ef4444';
+        btn.disabled = false; btn.textContent = 'Gunakan';
+      }
+    }
+    else {
       msgEl.textContent = 'Kode promo tidak valid.';
       msgEl.style.color = '#ef4444';
       appliedPromo = null;
@@ -519,10 +543,10 @@
     setTimeout(async () => {
       const registrantId = generateId('REG');
       const qrCode = generateId('QR');
-      const isFree = selectedTicket.price === 0;
       const subtotal = selectedTicket.price * selectedQuantity;
       const discount = appliedPromo ? Math.round(subtotal * appliedPromo.discount) : 0;
       const finalPrice = subtotal - discount;
+      const isFree = finalPrice === 0;
 
       const reg = {
         id: registrantId,
