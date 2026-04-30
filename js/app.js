@@ -427,4 +427,4 @@ window.DB = DB;
 window.WA = WA;
 
 // Init
-DB.seed();
+// DB.seed(); // Dimatikan agar data dummy tidak terbuat otomatis di production
