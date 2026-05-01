@@ -132,7 +132,7 @@
       
       const clickAction = isClosed ? '' : `onclick="location.href='/register?event=${ev.id}'"`;
       const cardStyle = isClosed ? 'opacity: 0.8; filter: grayscale(40%); cursor: default;' : '';
-      const buttonText = isClosed ? '⛔ Ditutup' : (isSoldOut ? '🚫 Penuh' : '✨ Daftar');
+      const buttonText = isClosed || isSoldOut ? '🚫 Penuh' : '✨ Daftar';
       const isDisabled = isClosed || isSoldOut;
 
       html += `
@@ -145,7 +145,7 @@
             ${isSoldOut && !isClosed ? `<div style="position:absolute;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;">
               <span class="badge badge-red" style="font-size:0.9rem;padding:0.4rem 1rem;">SOLD OUT</span></div>` : ''}
             ${isClosed ? `<div style="position:absolute;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;">
-              <span class="badge badge-gray" style="font-size:0.9rem;padding:0.4rem 1rem;">EVENT DITUTUP</span></div>` : ''}
+              <span class="badge badge-red" style="font-size:0.9rem;padding:0.4rem 1rem;">SOLD OUT</span></div>` : ''}
           </div>
           <div class="event-card-body">
             <div class="event-card-title">${ev.name}</div>
