@@ -46,6 +46,14 @@
       <a href="/" class="btn btn-primary btn-full mt-2">Lihat Event</a>
     </div>
 
+    <!-- EVENT CLOSED -->
+    <div id="closed-event-msg" class="empty-state hidden">
+      <div class="empty-icon">⛔</div>
+      <h3>Pendaftaran Ditutup</h3>
+      <p>Mohon maaf, pendaftaran untuk event ini telah ditutup atau sudah kadaluarsa.</p>
+      <a href="/" class="btn btn-primary btn-full mt-2">Lihat Event Lainnya</a>
+    </div>
+
     <!-- SUCCESS / PENDING STATE -->
     <div id="success-screen" class="hidden animate-fade-in">
       <div class="pending-banner">
@@ -286,6 +294,14 @@
     currentEvent = await DB.getEvent(selectedEventId);
     if (!currentEvent) { window.location.href = '/'; return; }
     globalSettings = await DB.getSettings();
+
+    const isExpired = new Date(currentEvent.date + 'T23:59:59') < new Date();
+    if (currentEvent.status !== 'active' || isExpired) {
+      document.getElementById('form-wrapper').classList.add('hidden');
+      document.getElementById('closed-event-msg').classList.remove('hidden');
+      document.title = `Pendaftaran Ditutup — Matchaji Roadshow`;
+      return;
+    }
 
     document.title = `Daftar: ${currentEvent.name} — Matchaji Roadshow`;
     populateEventBanner();
