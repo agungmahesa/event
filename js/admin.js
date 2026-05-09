@@ -252,6 +252,8 @@ async function openEventModal(eventId = null) {
   document.getElementById('ev-category').value = 'Workshop';
   document.getElementById('ev-capacity').value = '100';
   document.getElementById('ev-status').value = 'active';
+  const extLinkEl = document.getElementById('ev-external-link');
+  if (extLinkEl) extLinkEl.value = '';
   const piEl = document.getElementById('ev-payment-info');
   if (piEl) piEl.value = '';
   document.getElementById('ev-tickets-json').value = JSON.stringify([{ id: 'general', name: 'General', price: 0, quota: 100 }], null, 2);
@@ -271,6 +273,8 @@ async function openEventModal(eventId = null) {
     document.getElementById('ev-category').value = ev.category || 'Workshop';
     document.getElementById('ev-capacity').value = ev.capacity || 100;
     document.getElementById('ev-status').value = ev.status || 'active';
+    const extLinkEl2 = document.getElementById('ev-external-link');
+    if (extLinkEl2) extLinkEl2.value = ev.externalLink || '';
     const piEl2 = document.getElementById('ev-payment-info');
     if (piEl2) piEl2.value = ev.paymentInfo || '';
     document.getElementById('ev-tickets-json').value = JSON.stringify(ev.tickets || [], null, 2);
@@ -310,6 +314,7 @@ async function saveEvent() {
     category: document.getElementById('ev-category').value,
     capacity: parseInt(document.getElementById('ev-capacity').value) || 100,
     status: document.getElementById('ev-status').value,
+    externalLink: document.getElementById('ev-external-link')?.value.trim() || '',
     tickets,
     paymentInfo: document.getElementById('ev-payment-info')?.value.trim() || '',
     terms: document.getElementById('terms-editor').innerHTML,

@@ -130,7 +130,8 @@
       const isExpired = new Date(ev.date + 'T23:59:59') < new Date();
       const isClosed = ev.status !== 'active' || isExpired;
       
-      const clickAction = isClosed ? '' : `onclick="location.href='/register?event=${ev.id}'"`;
+      const regUrl = ev.externalLink ? ev.externalLink : `/register?event=${ev.id}`;
+      const clickAction = isClosed ? '' : `onclick="location.href='${regUrl}'"`;
       const cardStyle = isClosed ? 'opacity: 0.8; filter: grayscale(40%); cursor: default;' : '';
       const buttonText = isClosed || isSoldOut ? '🚫 Penuh' : '✨ Daftar';
       const isDisabled = isClosed || isSoldOut;
