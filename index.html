@@ -195,7 +195,15 @@
   }
 
   (async function init() {
-    allEvents = await DB.getEvents();
+    if (window.supabase) {
+      const { data } = await supabase.from('events')
+        .select('id, name, description, date, time, endTime, location, organizer, category, capacity, status, externalLink, tickets')
+        .order('date', { ascending: true });
+      allEvents = data || [];
+    } else {
+      allEvents = [];
+    }
+
     // Sort so active events are shown first
     allEvents.sort((a, b) => {
       const aExpired = new Date(a.date + 'T23:59:59') < new Date();
@@ -205,8 +213,37 @@
       if (aClosed === bClosed) return new Date(a.date) - new Date(b.date);
       return aClosed ? 1 : -1;
     });
+    
+    // Render text and UI instantly!
     renderEvents(allEvents);
     initStats();
+
+    // Lazy load heavy base64 images in the background
+    if (window.supabase && allEvents.length > 0) {
+      setTimeout(async () => {
+        const { data: galleryData } = await supabase.from('events').select('id, gallery');
+        if (galleryData) {
+          galleryData.forEach(ev => {
+            const matchingEvent = allEvents.find(e => e.id === ev.id);
+            if (matchingEvent) matchingEvent.gallery = ev.gallery;
+            
+            const firstImg = ev.gallery && ev.gallery.length ? ev.gallery[0] : null;
+            if (firstImg) {
+              const card = document.getElementById(`event-${ev.id}`);
+              if (card) {
+                const placeholder = card.querySelector('.event-card-img-placeholder');
+                if (placeholder) {
+                  const img = document.createElement('img');
+                  img.src = firstImg;
+                  img.alt = matchingEvent.name;
+                  placeholder.replaceWith(img);
+                }
+              }
+            }
+          });
+        }
+      }, 100);
+    }
   })();
 </script>
 </body>
