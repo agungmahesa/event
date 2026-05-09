@@ -297,10 +297,12 @@ async function saveEvent() {
   const date = document.getElementById('ev-date').value;
   const location = document.getElementById('ev-location').value.trim();
   if (!name || !date || !location) { showToast('Nama, tanggal, dan lokasi wajib diisi', 'error'); return; }
-
   let tickets = [];
-  try { tickets = JSON.parse(document.getElementById('ev-tickets-json').value); }
-  catch { showToast('Format JSON tiket tidak valid', 'error'); return; }
+  const ticketsRaw = document.getElementById('ev-tickets-json').value.trim();
+  if (ticketsRaw) {
+    try { tickets = JSON.parse(ticketsRaw); }
+    catch { showToast('Format JSON tiket tidak valid', 'error'); return; }
+  }
 
   const event = {
     id: editingEventId || generateEventId(),
