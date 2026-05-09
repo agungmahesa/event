@@ -115,16 +115,20 @@
     }
     noEvents.classList.add('hidden');
 
-    // Fetch all registrants for these events concurrently for massive speedup
-    const registrantsData = await Promise.all(events.map(ev => DB.getRegistrantsByEvent(ev.id)));
+    // Optimize: fetch only eventId to count registrants in one light query
+    let counts = {};
+    if (window.supabase) {
+      const { data } = await supabase.from('registrants').select('eventId');
+      if (data) data.forEach(r => counts[r.eventId] = (counts[r.eventId] || 0) + 1);
+    }
 
     let html = '';
     events.forEach((ev, i) => {
-      const regs = registrantsData[i];
+      const regCount = counts[ev.id] || 0;
       const firstImg = ev.gallery && ev.gallery.length ? ev.gallery[0] : null;
       const minPrice = ev.tickets?.reduce((min, t) => Math.min(min, t.price), Infinity) ?? 0;
       const totalQuota = ev.tickets?.reduce((s, t) => s + (t.quota || 0), 0) || ev.capacity;
-      const pct = totalQuota ? Math.round((regs.length / totalQuota) * 100) : 0;
+      const pct = totalQuota ? Math.round((regCount / totalQuota) * 100) : 0;
       const isSoldOut = pct >= 100;
       const isAlmostFull = pct >= 80 && pct < 100;
       const isExpired = new Date(ev.date + 'T23:59:59') < new Date();
@@ -185,10 +189,9 @@
   }
 
   async function initStats() {
-    const stats = await DB.getStats();
-    document.getElementById('hl-events').textContent = stats.totalEvents;
-    document.getElementById('hl-regs').textContent = stats.totalRegistrants;
-    document.getElementById('hl-checked').textContent = stats.checkedIn;
+    const activeEvents = allEvents.filter(e => e.status === 'active' && new Date(e.date + 'T23:59:59') >= new Date()).length;
+    const hlEvents = document.getElementById('hl-events');
+    if (hlEvents) hlEvents.textContent = activeEvents;
   }
 
   (async function init() {
