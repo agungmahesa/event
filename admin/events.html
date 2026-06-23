@@ -86,13 +86,11 @@
             <option value="Meetup">Meetup</option>
           </select>
         </div>
-        <div class="form-group">
-          <label class="form-label" for="ev-time">Jam Mulai</label>
-          <input type="time" id="ev-time" class="form-control" value="09:00">
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="ev-end-time">Jam Selesai</label>
-          <input type="time" id="ev-end-time" class="form-control" value="17:00">
+        <div class="form-group" style="grid-column:1/-1;">
+          <label class="form-label">🕐 Sesi Event</label>
+          <div id="sessions-builder" style="display:flex;flex-direction:column;gap:0.5rem;margin-bottom:0.5rem;"></div>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="addSessionRow()">+ Tambah Sesi</button>
+          <span class="form-hint">Tambah satu sesi atau lebih. Peserta akan memilih sesi saat mendaftar.</span>
         </div>
         <div class="form-group" style="grid-column:1/-1;">
           <label class="form-label" for="ev-location">Lokasi <span>*</span></label>

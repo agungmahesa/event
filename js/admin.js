@@ -149,7 +149,7 @@ async function renderRecentRegistrants(eventId = '') {
   regs = regs.sort((a, b) => new Date(b.createdAt || b.registeredAt) - new Date(a.createdAt || a.registeredAt));
 
   if (!regs.length) {
-    tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted" style="padding:3rem;">Tidak ada data peserta</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted" style="padding:3rem;">Tidak ada data peserta</td></tr>`;
     return;
   }
 
@@ -165,6 +165,7 @@ async function renderRecentRegistrants(eventId = '') {
         </td>
         <td class="text-sm text-muted">${ev ? ev.name.substring(0, 30) + '…' : '-'}</td>
         <td class="text-sm">${r.ticketType || r.ticketId}</td>
+        <td class="text-xs text-muted">${r.sessionLabel ? '<span class="badge badge-violet" style="font-size:0.65rem;">' + r.sessionLabel + '</span>' : '-'}</td>
         <td class="text-xs text-muted">${formatDateTime(r.createdAt || r.registeredAt)}</td>
         <td>
           ${r.checkedIn
@@ -183,6 +184,64 @@ async function renderRecentRegistrants(eventId = '') {
 // ================================================================
 let editingEventId = null;
 let editorGallery = [];
+
+// ---- SESSION BUILDER HELPERS ----
+function renderSessionsBuilder(sessions) {
+  const builder = document.getElementById('sessions-builder');
+  if (!builder) return;
+  builder.innerHTML = '';
+  const rows = sessions && sessions.length ? sessions : [{ id: 's1', label: 'Sesi 1', time: '09:00', endTime: '17:00' }];
+  rows.forEach((s, i) => builder.insertAdjacentHTML('beforeend', _sessionRow(s, i)));
+}
+
+function _sessionRow(s, i) {
+  return `<div class="session-row" data-idx="${i}" style="display:grid;grid-template-columns:auto 1fr 1fr 1fr auto;gap:0.5rem;align-items:center;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:0.6rem 0.75rem;">
+    <span style="font-size:0.75rem;font-weight:700;color:var(--text-muted);white-space:nowrap;">Sesi ${i + 1}</span>
+    <input type="text" placeholder="Nama (mis: Pagi)" value="${s.label || ''}" class="form-control session-label" style="font-size:0.8rem;padding:0.4rem 0.6rem;height:36px;">
+    <input type="time" value="${s.time || '09:00'}" class="form-control session-time" style="font-size:0.8rem;padding:0.4rem 0.6rem;height:36px;">
+    <input type="time" value="${s.endTime || '17:00'}" class="form-control session-endtime" style="font-size:0.8rem;padding:0.4rem 0.6rem;height:36px;">
+    <button type="button" onclick="removeSessionRow(${i})" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:1rem;padding:0 4px;" title="Hapus">✕</button>
+  </div>`;
+}
+
+function addSessionRow() {
+  const builder = document.getElementById('sessions-builder');
+  if (!builder) return;
+  const i = builder.querySelectorAll('.session-row').length;
+  builder.insertAdjacentHTML('beforeend', _sessionRow({ id: 's' + (i + 1), label: 'Sesi ' + (i + 1), time: '09:00', endTime: '17:00' }, i));
+  _renumberSessions();
+}
+
+function removeSessionRow(idx) {
+  const builder = document.getElementById('sessions-builder');
+  if (!builder) return;
+  const rows = builder.querySelectorAll('.session-row');
+  if (rows.length <= 1) { showToast('Minimal harus ada 1 sesi', 'warning'); return; }
+  rows[idx]?.remove();
+  _renumberSessions();
+}
+
+function _renumberSessions() {
+  const builder = document.getElementById('sessions-builder');
+  if (!builder) return;
+  builder.querySelectorAll('.session-row').forEach((row, i) => {
+    row.dataset.idx = i;
+    row.querySelector('span').textContent = 'Sesi ' + (i + 1);
+    const btn = row.querySelector('button');
+    if (btn) btn.setAttribute('onclick', `removeSessionRow(${i})`);
+  });
+}
+
+function collectSessions() {
+  const builder = document.getElementById('sessions-builder');
+  if (!builder) return [];
+  return Array.from(builder.querySelectorAll('.session-row')).map((row, i) => ({
+    id: 's' + (i + 1),
+    label: row.querySelector('.session-label')?.value.trim() || ('Sesi ' + (i + 1)),
+    time: row.querySelector('.session-time')?.value || '09:00',
+    endTime: row.querySelector('.session-endtime')?.value || '17:00',
+  }));
+}
 
 async function initEventManager() {
   await renderEventList();
@@ -219,7 +278,7 @@ async function renderEventList() {
             <span class="badge ${ev.status === 'active' ? 'badge-green' : 'badge-gray'}">${ev.status === 'active' ? 'Aktif' : 'Nonaktif'}</span>
           </div>
           <div class="font-bold mb-1">${ev.name}</div>
-          <div class="text-sm text-muted mb-1">📅 ${formatDate(ev.date)} · ${ev.time}–${ev.endTime}</div>
+          <div class="text-sm text-muted mb-1">📅 ${formatDate(ev.date)} · ${ev.sessions && ev.sessions.length > 1 ? ev.sessions.length + ' Sesi' : ((ev.sessions && ev.sessions[0] ? ev.sessions[0].time + '–' + ev.sessions[0].endTime : (ev.time || '') + '–' + (ev.endTime || '')))}</div>
           <div class="text-sm text-muted mb-1">📍 ${ev.location}</div>
           <div class="text-sm text-muted">👥 ${regs.length} peserta · ✅ ${checked} check-in · 🖼️ ${ev.gallery?.length || 0} foto</div>
         </div>
@@ -245,8 +304,7 @@ async function openEventModal(eventId = null) {
   document.getElementById('ev-name').value = '';
   document.getElementById('ev-description').value = '';
   document.getElementById('ev-date').value = '';
-  document.getElementById('ev-time').value = '09:00';
-  document.getElementById('ev-end-time').value = '17:00';
+  renderSessionsBuilder([]);
   document.getElementById('ev-location').value = '';
   document.getElementById('ev-organizer').value = '';
   document.getElementById('ev-category').value = 'Workshop';
@@ -266,8 +324,11 @@ async function openEventModal(eventId = null) {
     document.getElementById('ev-name').value = ev.name || '';
     document.getElementById('ev-description').value = ev.description || '';
     document.getElementById('ev-date').value = ev.date || '';
-    document.getElementById('ev-time').value = ev.time || '09:00';
-    document.getElementById('ev-end-time').value = ev.endTime || '17:00';
+    // Load sessions (backward compat: build from time/endTime if no sessions)
+    const loadedSessions = ev.sessions && ev.sessions.length
+      ? ev.sessions
+      : [{ id: 's1', label: 'Sesi 1', time: ev.time || '09:00', endTime: ev.endTime || '17:00' }];
+    renderSessionsBuilder(loadedSessions);
     document.getElementById('ev-location').value = ev.location || '';
     document.getElementById('ev-organizer').value = ev.organizer || '';
     document.getElementById('ev-category').value = ev.category || 'Workshop';
@@ -304,13 +365,15 @@ async function saveEvent() {
     catch { showToast('Format JSON tiket tidak valid', 'error'); return; }
   }
 
+  const sessions = collectSessions();
   const event = {
     id: editingEventId || generateEventId(),
     name,
     description: document.getElementById('ev-description').value.trim(),
     date,
-    time: document.getElementById('ev-time').value,
-    endTime: document.getElementById('ev-end-time').value,
+    time: sessions[0]?.time || '09:00',
+    endTime: sessions[sessions.length - 1]?.endTime || '17:00',
+    sessions,
     location,
     organizer: document.getElementById('ev-organizer').value.trim(),
     category: document.getElementById('ev-category').value,

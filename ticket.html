@@ -11,31 +11,37 @@
 <body>
 
 <!-- NAVBAR -->
-<nav class="navbar">
-  <div class="container">
-    <div class="navbar-inner">
-      <a class="navbar-brand" href="/">
-        <img src="img/logo.png" alt="Matchaji" style="height:24px;">
-      </a>
-      <div class="navbar-links">
-        <a href="/">Beranda</a>
-      </div>
-      <button class="hamburger" id="hamburger-btn" aria-label="Menu">
-        <span></span><span></span><span></span>
-      </button>
-    </div>
-  </div>
-</nav>
+<header class="nav-wrap" id="nav-wrap">
+  <nav class="nav" id="nav">
+    <a href="https://matchaji.id/" class="logo">matchaji</a>
+    <ul class="nav-links">
+      <li><a href="https://matchaji.id/">Home</a></li>
+      <li><a href="https://matchaji.id/products.html">Products</a></li>
+      <li><a href="https://matchaji.id/process.html">Process</a></li>
+      <li><a href="/" class="active">Event</a></li>
+    </ul>
+    <a href="https://wa.me/6281533443559" class="nav-btn" target="_blank">
+      Contact Us
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1 9L9 1M9 1H3M9 1V7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </a>
+    <button class="burger" id="burger" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+</header>
 
-<!-- MOBILE DRAWER -->
-<div class="mobile-drawer" id="mobile-drawer" onclick="closeMobileDrawer(event)">
-  <div class="mobile-drawer-panel">
-    <div style="font-size:1.1rem;font-weight:800;color:var(--violet);margin-bottom:1.5rem;letter-spacing:-0.03em;">matchaji event</div>
-    <a href="/" class="mobile-drawer-link">🏠 Beranda</a>
-  </div>
+<!-- MOBILE MENU -->
+<div class="mob-menu" id="mob-menu">
+  <ul>
+    <li style="--d:0"><a href="https://matchaji.id/">Home</a></li>
+    <li style="--d:1"><a href="https://matchaji.id/products.html">Products</a></li>
+    <li style="--d:2"><a href="https://matchaji.id/process.html">Process</a></li>
+    <li style="--d:3"><a href="/" class="active">Event</a></li>
+    <li style="--d:4"><a href="https://wa.me/6281533443559" target="_blank">Contact Us &#x2197;</a></li>
+  </ul>
 </div>
 
-<div style="padding:2rem 0 5rem;">
+<div style="padding:6.5rem 0 5rem;">
   <div class="container-sm">
 
     <!-- NOT FOUND -->
@@ -193,6 +199,7 @@
               <div class="ticket-field">
                 <label>Waktu</label>
                 <p id="t-time">—</p>
+                <p id="t-session-badge" style="display:none;margin-top:0.25rem;font-size:0.72rem;font-weight:700;color:var(--violet);text-transform:uppercase;letter-spacing:0.06em;"></p>
               </div>
             </div>
             <div class="ticket-field" style="margin-top:0.5rem;">
@@ -235,6 +242,39 @@
   <span class="text-xs text-muted" style="color:#aaa;">Tap di mana saja untuk tutup</span>
 </div>
 
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-top">
+      <div class="footer-contact">
+        <span class="footer-phone">+62 815-3344-3559</span>
+        <a href="mailto:info.matchaji@gmail.com" class="footer-email">info.matchaji@gmail.com</a>
+      </div>
+      <div class="footer-links">
+        <div class="footer-col">
+          <span class="col-title">Navigation</span>
+          <a href="https://matchaji.id/">Home</a>
+          <a href="https://matchaji.id/products.html">Products</a>
+          <a href="https://matchaji.id/process.html">Process</a>
+          <a href="/">Event</a>
+        </div>
+        <div class="footer-col">
+          <span class="col-title">Social</span>
+          <a href="https://instagram.com/matchaji.id" target="_blank">Instagram &#x2197;</a>
+          <a href="https://wa.me/6281533443559" target="_blank">WhatsApp &#x2197;</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="footer-black-bar">
+    <div class="container footer-bar-inner">
+      <div class="footer-copyright">&#xA9; 2026 Matchaji Studio. All rights reserved.</div>
+      <div class="footer-legal"></div>
+    </div>
+  </div>
+</footer>
+
 <div id="toast-container"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/app.js"></script>
@@ -242,11 +282,19 @@
   let currentRegId = null;
   let proofBase64 = null;
 
-  document.getElementById('hamburger-btn')?.addEventListener('click', () => {
-    document.getElementById('mobile-drawer').classList.add('open');
-  });
+  const burger = document.getElementById('burger');
+  const mobMenu = document.getElementById('mob-menu');
+  if (burger && mobMenu) {
+    burger.addEventListener('click', () => {
+      burger.classList.toggle('open');
+      mobMenu.classList.toggle('open');
+    });
+  }
+  const navWrap = document.getElementById('nav-wrap');
+  window.addEventListener('scroll', () => {
+    if (navWrap) navWrap.classList.toggle('scrolled', window.scrollY > 30);
+  }, { passive: true });
   function closeMobileDrawer(e) {
-    if (e.target.id === 'mobile-drawer') document.getElementById('mobile-drawer').classList.remove('open');
   }
   function openLightbox(src) { document.getElementById('lightbox-img').src = src; document.getElementById('lightbox').style.display = 'flex'; }
   function closeLightbox() { document.getElementById('lightbox').style.display = 'none'; }
@@ -419,7 +467,13 @@
       document.getElementById('t-ticket-type').textContent = reg.ticketType;
       document.getElementById('t-event-name').textContent = ev ? ev.name : 'Event';
       document.getElementById('t-date').textContent = ev ? formatDate(ev.date) : '-';
-      document.getElementById('t-time').textContent = ev ? `${ev.time} – ${ev.endTime}` : '-';
+      // Show session if available, else fallback to ev.time
+      const timeDisplay = reg.sessionLabel || (ev ? `${ev.time} – ${ev.endTime}` : '-');
+      document.getElementById('t-time').textContent = timeDisplay;
+      if (reg.sessionLabel) {
+        const badge = document.getElementById('t-session-badge');
+        if (badge) { badge.textContent = '🕐 ' + (reg.sessionId || ''); badge.style.display = 'block'; }
+      }
       document.getElementById('t-location').textContent = ev ? ev.location : '-';
       document.getElementById('t-id').textContent = reg.id;
 

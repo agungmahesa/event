@@ -344,13 +344,14 @@ async function exportCSV(eventId) {
   const regs = eventId ? await DB.getRegistrantsByEvent(eventId) : await DB.getRegistrants();
   if (!regs.length) { showToast('Tidak ada data untuk diekspor', 'warning'); return; }
 
-  const headers = ['ID', 'Nama', 'Email', 'No. HP', 'Instansi', 'Event', 'Tipe Tiket', 'Tanggal Daftar', 'Status Check-in', 'Waktu Check-in'];
+  const headers = ['ID', 'Nama', 'Email', 'No. HP', 'Instansi', 'Event', 'Tipe Tiket', 'Sesi', 'Tanggal Daftar', 'Status Check-in', 'Waktu Check-in'];
   const events = await DB.getEvents();
   const rows = regs.map(r => {
     const ev = events.find(e => e.id === r.eventId);
     return [
       r.id, r.fullName || r.name, r.email, r.phone, r.company || r.institution || '',
       ev ? ev.name : r.eventId, r.ticketId || r.ticketType,
+      r.sessionLabel || '-',
       formatDateTime(r.createdAt || r.registeredAt),
       r.checkedIn ? 'Sudah Check-in' : 'Belum Check-in',
       r.checkedInAt ? formatDateTime(r.checkedInAt) : '-'

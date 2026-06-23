@@ -10,30 +10,34 @@
 <body>
 
 <!-- NAVBAR -->
-<nav class="navbar">
-  <div class="container">
-    <div class="navbar-inner">
-      <a class="navbar-brand" href="/">
-        <img src="img/logo.png" alt="Matchaji" style="height:24px;">
-      </a>
-      <div class="navbar-links">
-        <a href="/" class="active">Beranda</a>
-        <a href="https://matchaji.id" target="_blank">Matchaji.id ↗</a>
-      </div>
-      <button class="hamburger" id="hamburger-btn" aria-label="Menu">
-        <span></span><span></span><span></span>
-      </button>
-    </div>
-  </div>
-</nav>
+<header class="nav-wrap" id="nav-wrap">
+  <nav class="nav" id="nav">
+    <a href="https://matchaji.id/" class="logo">matchaji</a>
+    <ul class="nav-links">
+      <li><a href="https://matchaji.id/">Home</a></li>
+      <li><a href="https://matchaji.id/products.html">Products</a></li>
+      <li><a href="https://matchaji.id/process.html">Process</a></li>
+      <li><a href="/" class="active">Event</a></li>
+    </ul>
+    <a href="https://wa.me/6281533443559" class="nav-btn" target="_blank">
+      Contact Us
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1 9L9 1M9 1H3M9 1V7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </a>
+    <button class="burger" id="burger" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+</header>
 
-<!-- MOBILE DRAWER -->
-<div class="mobile-drawer" id="mobile-drawer" onclick="closeMobileDrawer(event)">
-  <div class="mobile-drawer-panel">
-    <div style="font-size:1.1rem;font-weight:800;color:var(--violet);margin-bottom:1.5rem;letter-spacing:-0.03em;">matchaji event</div>
-    <a href="/" class="mobile-drawer-link active">🏠 Beranda</a>
-    <a href="https://matchaji.id" target="_blank" class="mobile-drawer-link">🍵 Matchaji.id ↗</a>
-  </div>
+<!-- MOBILE MENU -->
+<div class="mob-menu" id="mob-menu">
+  <ul>
+    <li style="--d:0"><a href="https://matchaji.id/">Home</a></li>
+    <li style="--d:1"><a href="https://matchaji.id/products.html">Products</a></li>
+    <li style="--d:2"><a href="https://matchaji.id/process.html">Process</a></li>
+    <li style="--d:3"><a href="/" class="active">Event</a></li>
+    <li style="--d:4"><a href="https://wa.me/6281533443559" target="_blank">Contact Us &#x2197;</a></li>
+  </ul>
 </div>
 
 <!-- HERO -->
@@ -101,16 +105,36 @@
 </section>
 
 <!-- FOOTER -->
-<footer style="background:#111111;color:#FFFFFF;padding:3rem 0;text-align:center;">
+<footer class="footer">
   <div class="container">
-    <div style="display:flex;justify-content:center;margin-bottom:1rem;">
-      <span style="font-size:1.5rem;font-weight:800;letter-spacing:-0.03em;color:#FFFFFF;">matchaji</span>
+    <div class="footer-top">
+      <div class="footer-contact">
+        <span class="footer-phone">+62 815-3344-3559</span>
+        <a href="mailto:info.matchaji@gmail.com" class="footer-email">info.matchaji@gmail.com</a>
+      </div>
+      <div class="footer-links">
+        <div class="footer-col">
+          <span class="col-title">Navigation</span>
+          <a href="https://matchaji.id/">Home</a>
+          <a href="https://matchaji.id/products.html">Products</a>
+          <a href="https://matchaji.id/process.html">Process</a>
+          <a href="/">Event</a>
+        </div>
+        <div class="footer-col">
+          <span class="col-title">Social</span>
+          <a href="https://instagram.com/matchaji.id" target="_blank">Instagram &#x2197;</a>
+          <a href="https://wa.me/6281533443559" target="_blank">WhatsApp &#x2197;</a>
+        </div>
+      </div>
     </div>
-    <p class="text-xs" style="color:#888888;max-width:400px;margin:0 auto 1.5rem;line-height:1.6;">
-      Platform registrasi event & workshop resmi Matchaji Indonesia. Nikmati tea ritual ceremonial dan workshop eksklusif.
-    </p>
-    <div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:1.5rem;display:flex;flex-direction:column;gap:1rem;align-items:center;justify-content:center;">
-      <p class="text-xs" style="color:#666666;">&copy; 2026 Matchaji Indonesia. All rights reserved.</p>
+  </div>
+
+  <div class="footer-black-bar">
+    <div class="container footer-bar-inner">
+      <div class="footer-copyright">
+        &#xA9; 2026 Matchaji Studio. All rights reserved.
+      </div>
+      <div class="footer-legal"></div>
     </div>
   </div>
 </footer>
@@ -122,12 +146,36 @@
 <script>
   let allEvents = [];
 
-  // Hamburger menu logic
-  document.getElementById('hamburger-btn')?.addEventListener('click', () => {
-    document.getElementById('mobile-drawer').classList.add('open');
-  });
-  function closeMobileDrawer(e) {
-    if (e.target.id === 'mobile-drawer') document.getElementById('mobile-drawer').classList.remove('open');
+  // Burger / mobile menu
+  const burger = document.getElementById('burger');
+  const mobMenu = document.getElementById('mob-menu');
+  if (burger && mobMenu) {
+    burger.addEventListener('click', () => {
+      burger.classList.toggle('open');
+      mobMenu.classList.toggle('open');
+      document.body.style.overflow = mobMenu.classList.contains('open') ? 'hidden' : '';
+    });
+    mobMenu.querySelectorAll('a').forEach(a => {
+      a.addEventListener('click', () => {
+        burger.classList.remove('open');
+        mobMenu.classList.remove('open');
+        document.body.style.overflow = '';
+      });
+    });
+  }
+
+  // Sticky nav scroll behavior
+  const navWrap = document.getElementById('nav-wrap');
+  if (navWrap) {
+    const switchNav = () => {
+      if (window.scrollY > 50) {
+        navWrap.classList.add('scrolled');
+      } else {
+        navWrap.classList.remove('scrolled');
+      }
+    };
+    window.addEventListener('scroll', switchNav, { passive: true });
+    switchNav();
   }
 
   async function renderEvents(events) {

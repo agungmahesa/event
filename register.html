@@ -10,32 +10,37 @@
 <body>
 
 <!-- NAVBAR -->
-<nav class="navbar">
-  <div class="container">
-    <div class="navbar-inner">
-      <a class="navbar-brand" href="/">
-        <img src="img/logo.png" alt="Matchaji" style="height:24px;">
-      </a>
-      <div class="navbar-links">
-        <a href="/">Beranda</a>
-        <a href="#" class="active">Daftar</a>
-      </div>
-      <button class="hamburger" id="hamburger-btn" aria-label="Menu">
-        <span></span><span></span><span></span>
-      </button>
-    </div>
-  </div>
-</nav>
+<header class="nav-wrap" id="nav-wrap">
+  <nav class="nav" id="nav">
+    <a href="https://matchaji.id/" class="logo">matchaji</a>
+    <ul class="nav-links">
+      <li><a href="https://matchaji.id/">Home</a></li>
+      <li><a href="https://matchaji.id/products.html">Products</a></li>
+      <li><a href="https://matchaji.id/process.html">Process</a></li>
+      <li><a href="/" class="active">Event</a></li>
+    </ul>
+    <a href="https://wa.me/6281533443559" class="nav-btn" target="_blank">
+      Contact Us
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1 9L9 1M9 1H3M9 1V7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </a>
+    <button class="burger" id="burger" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+</header>
 
-<!-- MOBILE DRAWER -->
-<div class="mobile-drawer" id="mobile-drawer" onclick="closeMobileDrawer(event)">
-  <div class="mobile-drawer-panel">
-    <div style="font-size:1.1rem;font-weight:800;color:var(--violet);margin-bottom:1.5rem;letter-spacing:-0.03em;">matchaji event</div>
-    <a href="/" class="mobile-drawer-link">🏠 Beranda</a>
-  </div>
+<!-- MOBILE MENU -->
+<div class="mob-menu" id="mob-menu">
+  <ul>
+    <li style="--d:0"><a href="https://matchaji.id/">Home</a></li>
+    <li style="--d:1"><a href="https://matchaji.id/products.html">Products</a></li>
+    <li style="--d:2"><a href="https://matchaji.id/process.html">Process</a></li>
+    <li style="--d:3"><a href="/" class="active">Event</a></li>
+    <li style="--d:4"><a href="https://wa.me/6281533443559" target="_blank">Contact Us &#x2197;</a></li>
+  </ul>
 </div>
 
-<div style="padding:2rem 0 5rem;">
+<div style="padding:6.5rem 0 5rem;">
   <div class="container-sm">
 
     <!-- EVENT NOT FOUND -->
@@ -179,6 +184,14 @@
       <!-- STEP 2: Pilih Tiket -->
       <div class="card hidden" id="step-2">
         <h3 style="margin-bottom:1.5rem;">🎟️ Pilih Tiket</h3>
+
+        <!-- SESSION PICKER (hanya muncul jika event multi-sesi) -->
+        <div id="session-section" style="display:none;margin-bottom:1.5rem;">
+          <div class="font-bold text-sm" style="margin-bottom:0.75rem;color:var(--text-primary);">🕐 Pilih Sesi</div>
+          <div id="session-options" style="display:flex;flex-direction:column;gap:0.5rem;"></div>
+          <span class="form-error hidden" id="err-session">Pilih sesi terlebih dahulu</span>
+        </div>
+
         <div id="ticket-options" style="display:flex;flex-direction:column;gap:0.75rem;margin-bottom:1.5rem;"></div>
 
         <!-- Quantity Selection -->
@@ -267,16 +280,33 @@
 </div>
 
 <!-- FOOTER -->
-<footer style="background:#111111;color:#FFFFFF;padding:3rem 0;text-align:center;">
+<footer class="footer">
   <div class="container">
-    <div style="display:flex;justify-content:center;margin-bottom:1rem;">
-      <span style="font-size:1.5rem;font-weight:800;letter-spacing:-0.03em;color:#FFFFFF;">matchaji</span>
+    <div class="footer-top">
+      <div class="footer-contact">
+        <span class="footer-phone">+62 815-3344-3559</span>
+        <a href="mailto:info.matchaji@gmail.com" class="footer-email">info.matchaji@gmail.com</a>
+      </div>
+      <div class="footer-links">
+        <div class="footer-col">
+          <span class="col-title">Navigation</span>
+          <a href="https://matchaji.id/">Home</a>
+          <a href="https://matchaji.id/products.html">Products</a>
+          <a href="https://matchaji.id/process.html">Process</a>
+          <a href="/">Event</a>
+        </div>
+        <div class="footer-col">
+          <span class="col-title">Social</span>
+          <a href="https://instagram.com/matchaji.id" target="_blank">Instagram &#x2197;</a>
+          <a href="https://wa.me/6281533443559" target="_blank">WhatsApp &#x2197;</a>
+        </div>
+      </div>
     </div>
-    <p class="text-xs" style="color:#888888;max-width:400px;margin:0 auto 1.5rem;line-height:1.6;">
-      Platform registrasi event & workshop resmi Matchaji Indonesia. Nikmati tea ritual ceremonial dan workshop eksklusif.
-    </p>
-    <div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:1.5rem;display:flex;flex-direction:column;gap:1rem;align-items:center;justify-content:center;">
-      <p class="text-xs" style="color:#666666;">&copy; 2026 Matchaji Indonesia. All rights reserved.</p>
+  </div>
+  <div class="footer-black-bar">
+    <div class="container footer-bar-inner">
+      <div class="footer-copyright">&#xA9; 2026 Matchaji Studio. All rights reserved.</div>
+      <div class="footer-legal"></div>
     </div>
   </div>
 </footer>
@@ -292,13 +322,22 @@
   let appliedPromo = null;
   let currentEvent = null;
   let globalSettings = null;
+  let selectedSession = null;
 
   // Mobile drawer
-  document.getElementById('hamburger-btn').addEventListener('click', () => {
-    document.getElementById('mobile-drawer').classList.add('open');
-  });
+  const burger = document.getElementById('burger');
+  const mobMenu = document.getElementById('mob-menu');
+  if (burger && mobMenu) {
+    burger.addEventListener('click', () => {
+      burger.classList.toggle('open');
+      mobMenu.classList.toggle('open');
+    });
+  }
+  const navWrap = document.getElementById('nav-wrap');
+  window.addEventListener('scroll', () => {
+    if (navWrap) navWrap.classList.toggle('scrolled', window.scrollY > 30);
+  }, { passive: true });
   function closeMobileDrawer(e) {
-    if (e.target.id === 'mobile-drawer') document.getElementById('mobile-drawer').classList.remove('open');
   }
 
   async function init() {
@@ -317,6 +356,7 @@
 
     document.title = `Daftar: ${currentEvent.name} — Matchaji Roadshow`;
     populateEventBanner();
+    renderSessions(currentEvent);
     await populateTickets();
     populateTerms();
     populatePaymentMethods();
@@ -346,6 +386,42 @@
     if (currentEvent.gallery?.length) {
       imgEl.innerHTML = `<img src="${currentEvent.gallery[0]}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.innerHTML='🍵';">`;
     }
+  }
+
+  function renderSessions(event) {
+    const section = document.getElementById('session-section');
+    const container = document.getElementById('session-options');
+    if (!section || !container) return;
+    const sessions = event.sessions;
+    if (!sessions || sessions.length <= 1) {
+      section.style.display = 'none';
+      if (sessions && sessions.length === 1) {
+        selectedSession = sessions[0];
+      } else if (event.time) {
+        selectedSession = { id: 's1', label: 'Sesi 1', time: event.time, endTime: event.endTime || '' };
+      }
+      return;
+    }
+    section.style.display = 'block';
+    selectedSession = sessions[0]; // auto-select first
+    container.innerHTML = sessions.map((s, i) => `
+      <label style="display:flex;align-items:center;gap:0.85rem;padding:0.85rem 1rem;background:var(--bg-card);border:2px solid ${i === 0 ? 'var(--violet)' : 'var(--border)'};border-radius:var(--radius-lg);cursor:pointer;transition:border-color 0.2s;" id="session-lbl-${s.id}" onclick="selectSession('${s.id}')">
+        <input type="radio" name="session-pick" value="${s.id}" ${i === 0 ? 'checked' : ''} style="accent-color:var(--violet);width:18px;height:18px;flex-shrink:0;">
+        <div style="flex:1;">
+          <div class="font-bold text-sm" style="color:var(--text-primary);">${s.label || ('Sesi ' + (i + 1))}</div>
+          <div class="text-xs text-muted" style="margin-top:0.15rem;">⏰ ${s.time} – ${s.endTime}</div>
+        </div>
+      </label>`).join('');
+  }
+
+  function selectSession(sessionId) {
+    const sessions = currentEvent?.sessions || [];
+    selectedSession = sessions.find(s => s.id === sessionId) || null;
+    sessions.forEach(s => {
+      const lbl = document.getElementById('session-lbl-' + s.id);
+      if (lbl) lbl.style.borderColor = s.id === sessionId ? 'var(--violet)' : 'var(--border)';
+    });
+    document.getElementById('err-session')?.classList.add('hidden');
   }
 
   async function populateTickets() {
@@ -507,6 +583,13 @@
     }
 
     if (step === 3) {
+      // Validate session if multi-sesi
+      const sessionSection = document.getElementById('session-section');
+      if (sessionSection && sessionSection.style.display !== 'none' && !selectedSession) {
+        document.getElementById('err-session').classList.remove('hidden');
+        showToast('Pilih sesi terlebih dahulu', 'error'); return;
+      }
+      document.getElementById('err-session')?.classList.add('hidden');
       if (!selectedTicket) { showToast('Pilih jenis tiket terlebih dahulu', 'error'); return; }
       const termsSection = document.getElementById('terms-section');
       const termsCheck = document.getElementById('agree-terms');
@@ -550,6 +633,7 @@
       ['Instansi', document.getElementById('reg-institution').value || '-'],
       ['Event', currentEvent.name],
       ['Tanggal', formatDate(currentEvent.date)],
+      ...(selectedSession ? [['Sesi', `${selectedSession.label} (${selectedSession.time}–${selectedSession.endTime})`]] : []),
       ['Lokasi', currentEvent.location],
       ['Tiket', selectedTicket.name],
       ['Jumlah', `${selectedQuantity} tiket`],
@@ -583,6 +667,8 @@
         id: registrantId,
         qrCode,
         eventId: selectedEventId,
+        sessionId: selectedSession?.id || null,
+        sessionLabel: selectedSession ? `${selectedSession.label} (${selectedSession.time}–${selectedSession.endTime})` : null,
         name: document.getElementById('reg-name').value.trim(),
         email: document.getElementById('reg-email').value.trim(),
         phone: document.getElementById('reg-phone').value.trim(),
