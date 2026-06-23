@@ -237,12 +237,21 @@
             </div>
           </td>
           <td class="text-sm text-muted" style="max-width:130px;white-space:normal;line-height:1.3;">${ev ? ev.name.substring(0, 30) + '…' : '-'}</td>
-          <td class="text-sm">
-            ${r.ticketType} (${r.quantity || 1}x)<br>
-            <span class="text-xs text-muted">${r.ticketPrice === 0 ? 'Gratis' : formatCurrency(r.totalPrice || (r.ticketPrice * (r.quantity || 1)))}</span>
-            ${r.promoCode ? `<br><span class="badge" style="background:var(--amber);color:#fff;font-size:0.6rem;padding:0.1rem 0.3rem;margin-top:0.2rem;display:inline-block;">🎟️ ${r.promoCode.toUpperCase()} (-${formatCurrency(r.discountAmount)})</span>` : ''}
-          </td>
-          <td class="text-xs text-muted">${r.sessionLabel ? '<span class="badge badge-violet" style="font-size:0.65rem;white-space:normal;line-height:1.3;">' + r.sessionLabel + '</span>' : '—'}</td>
+          ${(() => {
+            let tType = r.ticketType || '';
+            let sLabel = r.sessionLabel || '';
+            if (typeof tType === 'string' && tType.includes(' ||| ')) {
+              const parts = tType.split(' ||| ');
+              tType = parts[0];
+              sLabel = parts[1];
+            }
+            return `<td class="text-sm">
+              ${tType} (${r.quantity || 1}x)<br>
+              <span class="text-xs text-muted">${r.ticketPrice === 0 ? 'Gratis' : formatCurrency(r.totalPrice || (r.ticketPrice * (r.quantity || 1)))}</span>
+              ${r.promoCode ? `<br><span class="badge" style="background:var(--amber);color:#fff;font-size:0.6rem;padding:0.1rem 0.3rem;margin-top:0.2rem;display:inline-block;">🎟️ ${r.promoCode.toUpperCase()} (-${formatCurrency(r.discountAmount)})</span>` : ''}
+            </td>
+            <td class="text-xs text-muted">${sLabel ? '<span class="badge badge-violet" style="font-size:0.65rem;white-space:normal;line-height:1.3;">' + sLabel + '</span>' : '—'}</td>`;
+          })()}
           <td>${payBadge[r.paymentStatus] || payBadge.pending}</td>
           <td style="text-align:center;">
             ${hasProof

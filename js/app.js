@@ -350,8 +350,9 @@ async function exportCSV(eventId) {
     const ev = events.find(e => e.id === r.eventId);
     return [
       r.id, r.fullName || r.name, r.email, r.phone, r.company || r.institution || '',
-      ev ? ev.name : r.eventId, r.ticketId || r.ticketType,
-      r.sessionLabel || '-',
+      ev ? ev.name : r.eventId, 
+      (r.ticketType && r.ticketType.includes(' ||| ')) ? r.ticketType.split(' ||| ')[0] : (r.ticketId || r.ticketType),
+      (r.ticketType && r.ticketType.includes(' ||| ')) ? r.ticketType.split(' ||| ')[1] : (r.sessionLabel || '-'),
       formatDateTime(r.createdAt || r.registeredAt),
       r.checkedIn ? 'Sudah Check-in' : 'Belum Check-in',
       r.checkedInAt ? formatDateTime(r.checkedInAt) : '-'
