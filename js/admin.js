@@ -190,16 +190,22 @@ function renderSessionsBuilder(sessions) {
   const builder = document.getElementById('sessions-builder');
   if (!builder) return;
   builder.innerHTML = '';
-  const rows = sessions && sessions.length ? sessions : [{ id: 's1', label: 'Sesi 1', time: '09:00', endTime: '17:00' }];
+  // Strip seconds from time values (Supabase may return '09:00:00')
+  const normalize = s => ({ ...s, time: (s.time || '09:00').substring(0, 5), endTime: (s.endTime || '17:00').substring(0, 5) });
+  const rows = sessions && sessions.length ? sessions.map(normalize) : [{ id: 's1', label: 'Sesi 1', time: '09:00', endTime: '17:00', timezone: 'WIB' }];
   rows.forEach((s, i) => builder.insertAdjacentHTML('beforeend', _sessionRow(s, i)));
 }
 
 function _sessionRow(s, i) {
-  return `<div class="session-row" data-idx="${i}" style="display:grid;grid-template-columns:auto 1fr 1fr 1fr auto;gap:0.5rem;align-items:center;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:0.6rem 0.75rem;">
+  const tzOptions = ['WIB', 'WITA', 'WIT'].map(tz =>
+    `<option value="${tz}" ${(s.timezone || 'WIB') === tz ? 'selected' : ''}>${tz}</option>`
+  ).join('');
+  return `<div class="session-row" data-idx="${i}" style="display:grid;grid-template-columns:auto 1fr auto auto auto auto;gap:0.5rem;align-items:center;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:0.6rem 0.75rem;">
     <span style="font-size:0.75rem;font-weight:700;color:var(--text-muted);white-space:nowrap;">Sesi ${i + 1}</span>
-    <input type="text" placeholder="Nama (mis: Pagi)" value="${s.label || ''}" class="form-control session-label" style="font-size:0.8rem;padding:0.4rem 0.6rem;height:36px;">
-    <input type="time" value="${s.time || '09:00'}" class="form-control session-time" style="font-size:0.8rem;padding:0.4rem 0.6rem;height:36px;">
-    <input type="time" value="${s.endTime || '17:00'}" class="form-control session-endtime" style="font-size:0.8rem;padding:0.4rem 0.6rem;height:36px;">
+    <input type="text" placeholder="Nama (mis: Sesi Pagi)" value="${s.label || ''}" class="form-control session-label" style="font-size:0.8rem;padding:0.4rem 0.6rem;height:36px;">
+    <input type="time" value="${(s.time || '09:00').substring(0, 5)}" class="form-control session-time" style="font-size:0.8rem;padding:0.4rem 0.6rem;height:36px;width:110px;">
+    <input type="time" value="${(s.endTime || '17:00').substring(0, 5)}" class="form-control session-endtime" style="font-size:0.8rem;padding:0.4rem 0.6rem;height:36px;width:110px;">
+    <select class="form-control session-tz" style="font-size:0.78rem;padding:0.4rem 0.5rem;height:36px;width:80px;font-weight:700;">${tzOptions}</select>
     <button type="button" onclick="removeSessionRow(${i})" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:1rem;padding:0 4px;" title="Hapus">✕</button>
   </div>`;
 }
@@ -208,7 +214,7 @@ function addSessionRow() {
   const builder = document.getElementById('sessions-builder');
   if (!builder) return;
   const i = builder.querySelectorAll('.session-row').length;
-  builder.insertAdjacentHTML('beforeend', _sessionRow({ id: 's' + (i + 1), label: 'Sesi ' + (i + 1), time: '09:00', endTime: '17:00' }, i));
+  builder.insertAdjacentHTML('beforeend', _sessionRow({ id: 's' + (i + 1), label: 'Sesi ' + (i + 1), time: '09:00', endTime: '17:00', timezone: 'WIB' }, i));
   _renumberSessions();
 }
 
@@ -235,12 +241,18 @@ function _renumberSessions() {
 function collectSessions() {
   const builder = document.getElementById('sessions-builder');
   if (!builder) return [];
-  return Array.from(builder.querySelectorAll('.session-row')).map((row, i) => ({
-    id: 's' + (i + 1),
-    label: row.querySelector('.session-label')?.value.trim() || ('Sesi ' + (i + 1)),
-    time: row.querySelector('.session-time')?.value || '09:00',
-    endTime: row.querySelector('.session-endtime')?.value || '17:00',
-  }));
+  return Array.from(builder.querySelectorAll('.session-row')).map((row, i) => {
+    const rawTime = row.querySelector('.session-time')?.value || '09:00';
+    const rawEnd  = row.querySelector('.session-endtime')?.value || '17:00';
+    const tz = row.querySelector('.session-tz')?.value || 'WIB';
+    return {
+      id: 's' + (i + 1),
+      label: row.querySelector('.session-label')?.value.trim() || ('Sesi ' + (i + 1)),
+      time: rawTime.substring(0, 5),    // strip seconds: '09:00:00' → '09:00'
+      endTime: rawEnd.substring(0, 5),
+      timezone: tz,
+    };
+  });
 }
 
 async function initEventManager() {
@@ -278,7 +290,13 @@ async function renderEventList() {
             <span class="badge ${ev.status === 'active' ? 'badge-green' : 'badge-gray'}">${ev.status === 'active' ? 'Aktif' : 'Nonaktif'}</span>
           </div>
           <div class="font-bold mb-1">${ev.name}</div>
-          <div class="text-sm text-muted mb-1">📅 ${formatDate(ev.date)} · ${ev.sessions && ev.sessions.length > 1 ? ev.sessions.length + ' Sesi' : ((ev.sessions && ev.sessions[0] ? ev.sessions[0].time + '–' + ev.sessions[0].endTime : (ev.time || '') + '–' + (ev.endTime || '')))}</div>
+          <div class="text-sm text-muted mb-1">📅 ${formatDate(ev.date)} · ${
+            ev.sessions && ev.sessions.length > 1
+              ? ev.sessions.length + ' Sesi'
+              : (ev.sessions && ev.sessions[0]
+                ? ev.sessions[0].time + '–' + ev.sessions[0].endTime + ' ' + (ev.sessions[0].timezone || '')
+                : (ev.time || '') + '–' + (ev.endTime || ''))
+          }</div>
           <div class="text-sm text-muted mb-1">📍 ${ev.location}</div>
           <div class="text-sm text-muted">👥 ${regs.length} peserta · ✅ ${checked} check-in · 🖼️ ${ev.gallery?.length || 0} foto</div>
         </div>
@@ -325,9 +343,10 @@ async function openEventModal(eventId = null) {
     document.getElementById('ev-description').value = ev.description || '';
     document.getElementById('ev-date').value = ev.date || '';
     // Load sessions (backward compat: build from time/endTime if no sessions)
+    const normTime = s => ({ ...s, time: (s.time || '09:00').substring(0, 5), endTime: (s.endTime || '17:00').substring(0, 5), timezone: s.timezone || 'WIB' });
     const loadedSessions = ev.sessions && ev.sessions.length
-      ? ev.sessions
-      : [{ id: 's1', label: 'Sesi 1', time: ev.time || '09:00', endTime: ev.endTime || '17:00' }];
+      ? ev.sessions.map(normTime)
+      : [normTime({ id: 's1', label: 'Sesi 1', time: ev.time || '09:00', endTime: ev.endTime || '17:00', timezone: 'WIB' })];
     renderSessionsBuilder(loadedSessions);
     document.getElementById('ev-location').value = ev.location || '';
     document.getElementById('ev-organizer').value = ev.organizer || '';
@@ -371,8 +390,8 @@ async function saveEvent() {
     name,
     description: document.getElementById('ev-description').value.trim(),
     date,
-    time: sessions[0]?.time || '09:00',
-    endTime: sessions[sessions.length - 1]?.endTime || '17:00',
+    time: (sessions[0]?.time || '09:00').substring(0, 5),
+    endTime: (sessions[sessions.length - 1]?.endTime || '17:00').substring(0, 5),
     sessions,
     location,
     organizer: document.getElementById('ev-organizer').value.trim(),

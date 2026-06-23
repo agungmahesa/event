@@ -409,7 +409,7 @@
         <input type="radio" name="session-pick" value="${s.id}" ${i === 0 ? 'checked' : ''} style="accent-color:var(--violet);width:18px;height:18px;flex-shrink:0;">
         <div style="flex:1;">
           <div class="font-bold text-sm" style="color:var(--text-primary);">${s.label || ('Sesi ' + (i + 1))}</div>
-          <div class="text-xs text-muted" style="margin-top:0.15rem;">⏰ ${s.time} – ${s.endTime}</div>
+          <div class="text-xs text-muted" style="margin-top:0.15rem;">⏰ ${s.time} – ${s.endTime} ${s.timezone || ''}</div>
         </div>
       </label>`).join('');
   }
@@ -633,7 +633,7 @@
       ['Instansi', document.getElementById('reg-institution').value || '-'],
       ['Event', currentEvent.name],
       ['Tanggal', formatDate(currentEvent.date)],
-      ...(selectedSession ? [['Sesi', `${selectedSession.label} (${selectedSession.time}–${selectedSession.endTime})`]] : []),
+      ...(selectedSession ? [['Sesi', `${selectedSession.label} · ${selectedSession.time}–${selectedSession.endTime} ${selectedSession.timezone || ''}`]] : []),
       ['Lokasi', currentEvent.location],
       ['Tiket', selectedTicket.name],
       ['Jumlah', `${selectedQuantity} tiket`],
@@ -668,7 +668,7 @@
         qrCode,
         eventId: selectedEventId,
         sessionId: selectedSession?.id || null,
-        sessionLabel: selectedSession ? `${selectedSession.label} (${selectedSession.time}–${selectedSession.endTime})` : null,
+        sessionLabel: selectedSession ? `${selectedSession.label} · ${selectedSession.time}–${selectedSession.endTime} ${selectedSession.timezone || ''}`.trim() : null,
         name: document.getElementById('reg-name').value.trim(),
         email: document.getElementById('reg-email').value.trim(),
         phone: document.getElementById('reg-phone').value.trim(),
