@@ -67,12 +67,17 @@ function initSidebar() {
 // ADMIN DASHBOARD (admin/index.html)
 // ================================================================
 async function initDashboard() {
+  const fetchWithTimeout = (promise, name) => Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout ' + name)), 10000))
+  ]);
+
   // Load all dashboard data in parallel (much faster than sequential awaits)
   await Promise.all([
-    renderStats().catch(e => console.error('renderStats:', e)),
-    renderRecentRegistrants().catch(e => console.error('renderRecentRegistrants:', e)),
-    initEventFilter().catch(e => console.error('initEventFilter:', e)),
-    renderEventSummaryCards().catch(e => console.error('renderEventSummaryCards:', e)),
+    fetchWithTimeout(renderStats(), 'stats').catch(e => console.error('renderStats:', e)),
+    fetchWithTimeout(renderRecentRegistrants(), 'recent').catch(e => console.error('renderRecentRegistrants:', e)),
+    fetchWithTimeout(initEventFilter(), 'filters').catch(e => console.error('initEventFilter:', e)),
+    fetchWithTimeout(renderEventSummaryCards(), 'cards').catch(e => console.error('renderEventSummaryCards:', e)),
   ]);
 }
 

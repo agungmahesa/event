@@ -363,10 +363,16 @@
   (async function init() {
     try {
       // Load events + registrants in parallel on first open
+      // Timeout wrapper to prevent infinite loading if Supabase hangs
+      const fetchWithTimeout = (promise) => Promise.race([
+        promise,
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout dari Supabase (Lebih dari 10 detik)')), 10000))
+      ]);
+
       const [events, regs, settings] = await Promise.all([
-        DB.getEvents().catch(() => []),
-        DB.getRegistrants().catch(() => []),
-        DB.getSettings().catch(() => ({})),
+        fetchWithTimeout(DB.getEvents()).catch(e => { console.error('Events fail:', e); return []; }),
+        fetchWithTimeout(DB.getRegistrants()).catch(e => { console.error('Regs fail:', e); return []; }),
+        fetchWithTimeout(DB.getSettings()).catch(e => { console.error('Settings fail:', e); return {}; }),
       ]);
       _cache.events = events || [];
       _cache.regs = regs || [];
