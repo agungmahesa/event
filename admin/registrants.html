@@ -146,6 +146,16 @@
 <script src="../js/app.js"></script>
 <script src="../js/admin.js"></script>
 <script>
+  window.addEventListener('error', function(e) {
+    const tbody = document.getElementById('reg-tbody');
+    if(tbody) tbody.innerHTML = `<tr><td colspan="8" style="color:red;padding:2rem;"><b>JS Error:</b> ${e.message} <br><small>${e.filename}:${e.lineno}</small></td></tr>`;
+  });
+  window.addEventListener('unhandledrejection', function(e) {
+    const tbody = document.getElementById('reg-tbody');
+    if(tbody) tbody.innerHTML = `<tr><td colspan="8" style="color:red;padding:2rem;"><b>Unhandled Promise:</b> ${e.reason?.message || e.reason} <br><small>${e.reason?.stack}</small></td></tr>`;
+  });
+</script>
+<script>
   const PAGE_SIZE = 20;
   let currentPage = 1;
   let filteredRegs = [];
