@@ -45,7 +45,7 @@
       <div style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center;margin-bottom:1.25rem;">
         <div class="search-bar" style="flex:1;min-width:200px;">
           <span class="search-icon">🔍</span>
-          <input type="text" id="search-q" class="form-control" placeholder="Cari nama, email, ID..." oninput="applyFilters()">
+          <input type="text" id="search-q" class="form-control" placeholder="Cari nama, email, ID..." oninput="onSearchInput()">
         </div>
         <select class="form-control" id="filter-event" onchange="applyFilters()" style="width:auto;max-width:220px;font-size:0.85rem;">
           <option value="">Semua Event</option>
@@ -150,20 +150,45 @@
   let currentPage = 1;
   let filteredRegs = [];
 
+  // ── In-memory cache to avoid redundant Supabase calls ──
+  let _cache = { regs: null, events: null, settings: null };
+  let _searchTimer = null;
+
+  async function getRegs(forceRefresh = false) {
+    if (!_cache.regs || forceRefresh) {
+      _cache.regs = await DB.getRegistrants();
+    }
+    return _cache.regs;
+  }
+  async function getEvents() {
+    if (!_cache.events) _cache.events = await DB.getEvents();
+    return _cache.events;
+  }
+  async function getSettings() {
+    if (!_cache.settings) _cache.settings = await DB.getSettings();
+    return _cache.settings;
+  }
+  function invalidateCache() { _cache = { regs: null, events: null, settings: null }; }
+
   async function initFilters() {
-    const events = await DB.getEvents();
+    const events = await getEvents();
     const sel = document.getElementById('filter-event');
     sel.innerHTML = '<option value="">Semua Event</option>' +
       events.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
   }
 
-  async function applyFilters() {
+  function onSearchInput() {
+    clearTimeout(_searchTimer);
+    _searchTimer = setTimeout(() => applyFilters(), 300);
+  }
+
+  async function applyFilters(forceRefresh = false) {
     const q = document.getElementById('search-q').value.toLowerCase().trim();
     const evId = document.getElementById('filter-event').value;
     const pay = document.getElementById('filter-payment').value;
     const ci = document.getElementById('filter-checkin').value;
 
-    let regs = await DB.getRegistrants();
+    let regs = await getRegs(forceRefresh);
     if (q) regs = regs.filter(r =>
       r.name.toLowerCase().includes(q) ||
       r.email.toLowerCase().includes(q) ||
@@ -190,8 +215,8 @@
     document.getElementById('reg-count-label').textContent = `${total} peserta ditemukan`;
     document.getElementById('pagination-info').textContent = `Halaman ${currentPage} dari ${totalPages} (${total} total)`;
 
-    const events = await DB.getEvents();
-    const settings = await DB.getSettings();
+    const events = await getEvents();
+    const settings = await getSettings();
     const payBadge = {
       pending:    `<span class="badge badge-amber" style="font-size:0.68rem;">⏳ Pending</span>`,
       approved:   `<span class="badge badge-green" style="font-size:0.68rem;">✅ Approved</span>`,
@@ -324,11 +349,22 @@
     if (reg) {
       showToast(`Pembayaran ${reg.name || reg.fullName} ditolak.`, 'warning');
       closeRejectModal();
-      await applyFilters();
+      invalidateCache();
+      await applyFilters(true);
     }
   }
 
   (async function init() {
+    // Load events + registrants in parallel on first open
+    const [events, regs, settings] = await Promise.all([
+      DB.getEvents(),
+      DB.getRegistrants(),
+      DB.getSettings(),
+    ]);
+    _cache.events = events;
+    _cache.regs = regs;
+    _cache.settings = settings;
+
     await initFilters();
     await applyFilters();
   })();
@@ -495,7 +531,8 @@
 
     showToast(`${name} berhasil didaftarkan sebagai Invitation! 🎉`, 'success', 4000);
     closeAddRegistrantModal();
-    await applyFilters();
+    invalidateCache();
+    await applyFilters(true);
   }
 
   // Close overlay when clicking backdrop

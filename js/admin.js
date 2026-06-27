@@ -65,10 +65,13 @@ function initSidebar() {
 // ADMIN DASHBOARD (admin/index.html)
 // ================================================================
 async function initDashboard() {
-  await renderStats();
-  await renderRecentRegistrants();
-  await initEventFilter();
-  await renderEventSummaryCards();
+  // Load all dashboard data in parallel (much faster than sequential awaits)
+  await Promise.all([
+    renderStats(),
+    renderRecentRegistrants(),
+    initEventFilter(),
+    renderEventSummaryCards(),
+  ]);
 }
 
 // Global: callable from inline onclick in table rows
@@ -77,11 +80,18 @@ async function approvePayment(regId) {
   if (reg) {
     showToast(`✅ Pembayaran ${reg.name} disetujui! Tiket aktif.`, 'success', 4000);
 
-    // Refresh all sections that exist on the current page
-    if (typeof renderPendingSection === 'function') await renderPendingSection();
-    if (typeof renderStats === 'function') await renderStats();
-    if (typeof renderRecentRegistrants === 'function') await renderRecentRegistrants(document.getElementById('filter-event')?.value || '');
-    if (typeof applyFilters === 'function') await applyFilters(); // for registrants.html
+    // Invalidate cache if on registrants page
+    if (typeof invalidateCache === 'function') invalidateCache();
+
+    // Refresh all sections that exist on the current page (in parallel)
+    await Promise.all([
+      typeof renderPendingSection === 'function' ? renderPendingSection() : Promise.resolve(),
+      typeof renderStats === 'function' ? renderStats() : Promise.resolve(),
+      typeof renderRecentRegistrants === 'function'
+        ? renderRecentRegistrants(document.getElementById('filter-event')?.value || '')
+        : Promise.resolve(),
+      typeof applyFilters === 'function' ? applyFilters(true) : Promise.resolve(),
+    ]);
   }
 }
 
@@ -100,9 +110,12 @@ async function renderEventSummaryCards() {
   const events = await DB.getEvents();
   if (!events.length) { container.innerHTML = '<p class="text-muted text-sm">Belum ada event.</p>'; return; }
 
+  // Fetch all event registrants in parallel instead of one by one
+  const allRegsArr = await Promise.all(events.map(ev => DB.getRegistrantsByEvent(ev.id)));
+
   let html = '';
-  for (const ev of events) {
-    const regs = await DB.getRegistrantsByEvent(ev.id);
+  events.forEach((ev, i) => {
+    const regs = allRegsArr[i];
     const checked = regs.filter(r => r.checkedIn).length;
     const pct = regs.length ? Math.round((checked / regs.length) * 100) : 0;
     html += `
@@ -121,7 +134,7 @@ async function renderEventSummaryCards() {
         </div>
         <div class="text-xs text-muted mt-1">${pct}% check-in</div>
       </div>`;
-  }
+  });
   container.innerHTML = html;
 }
 
