@@ -194,7 +194,7 @@
       (r.name || '').toLowerCase().includes(q) ||
       (r.email || '').toLowerCase().includes(q) ||
       (r.id || '').toLowerCase().includes(q) ||
-      (r.phone || '').includes(q)
+      String(r.phone || '').includes(q)
     );
     if (evId) regs = regs.filter(r => r.eventId === evId);
     if (pay) regs = regs.filter(r => r.paymentStatus === pay);
@@ -207,6 +207,7 @@
   }
 
   async function renderTable() {
+    try {
     const tbody = document.getElementById('reg-tbody');
     const total = filteredRegs.length;
     const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -223,7 +224,11 @@
       approved:   `<span class="badge badge-green" style="font-size:0.68rem;">✅ Approved</span>`,
       free:       `<span class="badge" style="font-size:0.68rem;background:#7c3aed;color:#fff;">🎁 Invitation</span>`,
       rejected:   `<span class="badge badge-red" style="font-size:0.68rem;">🚫 Ditolak</span>`,
-    };
+      } catch(err) {
+      console.error('RENDER_TABLE_ERROR:', err);
+      document.getElementById('reg-tbody').innerHTML = `<tr><td colspan='8' class='text-center text-red'>Render error: ${err.message}</td></tr>`;
+    }
+  };
 
     if (!pageRegs.length) {
       tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted" style="padding:3rem;">Tidak ada data peserta</td></tr>`;
