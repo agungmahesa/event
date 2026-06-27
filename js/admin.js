@@ -8,39 +8,41 @@ if (!window.location.pathname.endsWith('login')) {
   document.body.style.visibility = 'hidden';
 }
 
-// Failsafe: show body after 6s no matter what
+// Failsafe: show body after 4s no matter what (prevents stuck blank page)
 const _authTimeout = setTimeout(() => {
   document.body.style.visibility = 'visible';
-}, 6000);
+}, 4000);
 
 (async function checkAdminAuth() {
   if (window.location.pathname.endsWith('login')) {
     clearTimeout(_authTimeout);
+    document.body.style.visibility = 'visible';
     return;
   }
 
+  // If Supabase not initialized, show page (offline/dev mode)
   if (!supabase?.auth) {
     clearTimeout(_authTimeout);
-    window.location.replace('/admin/login');
+    document.body.style.visibility = 'visible';
     return;
   }
 
   try {
-    // Give Supabase 300ms to restore session from localStorage before querying
-    await new Promise(r => setTimeout(r, 300));
+    // Race: either get session in 3s OR show page anyway
+    const sessionPromise = supabase.auth.getSession();
+    const timeoutPromise = new Promise(r => setTimeout(() => r({ data: null, _timeout: true }), 3000));
 
-    const { data, error } = await supabase.auth.getSession();
+    const result = await Promise.race([sessionPromise, timeoutPromise]);
 
     clearTimeout(_authTimeout);
-    if (data?.session) {
-      document.body.style.visibility = 'visible';
-    } else {
+    document.body.style.visibility = 'visible';
+
+    if (!result._timeout && !result.data?.session) {
       window.location.replace('/admin/login');
     }
   } catch (err) {
     console.error('Auth check error:', err);
     clearTimeout(_authTimeout);
-    // On error, show page rather than loop — avoids infinite redirect
     document.body.style.visibility = 'visible';
   }
 })();
@@ -67,10 +69,10 @@ function initSidebar() {
 async function initDashboard() {
   // Load all dashboard data in parallel (much faster than sequential awaits)
   await Promise.all([
-    renderStats(),
-    renderRecentRegistrants(),
-    initEventFilter(),
-    renderEventSummaryCards(),
+    renderStats().catch(e => console.error('renderStats:', e)),
+    renderRecentRegistrants().catch(e => console.error('renderRecentRegistrants:', e)),
+    initEventFilter().catch(e => console.error('initEventFilter:', e)),
+    renderEventSummaryCards().catch(e => console.error('renderEventSummaryCards:', e)),
   ]);
 }
 

@@ -183,12 +183,13 @@
   }
 
   async function applyFilters(forceRefresh = false) {
-    const q = document.getElementById('search-q').value.toLowerCase().trim();
-    const evId = document.getElementById('filter-event').value;
-    const pay = document.getElementById('filter-payment').value;
-    const ci = document.getElementById('filter-checkin').value;
+    const q = (document.getElementById('search-q')?.value || '').toLowerCase().trim();
+    const evId = document.getElementById('filter-event')?.value || '';
+    const pay = document.getElementById('filter-payment')?.value || '';
+    const ci = document.getElementById('filter-checkin')?.value || '';
 
-    let regs = await getRegs(forceRefresh);
+    let regs = await getRegs(forceRefresh).catch(() => []);
+    regs = regs || [];
     if (q) regs = regs.filter(r =>
       r.name.toLowerCase().includes(q) ||
       r.email.toLowerCase().includes(q) ||
@@ -355,16 +356,22 @@
   }
 
   (async function init() {
-    // Load events + registrants in parallel on first open
-    const [events, regs, settings] = await Promise.all([
-      DB.getEvents(),
-      DB.getRegistrants(),
-      DB.getSettings(),
-    ]);
-    _cache.events = events;
-    _cache.regs = regs;
-    _cache.settings = settings;
-
+    try {
+      // Load events + registrants in parallel on first open
+      const [events, regs, settings] = await Promise.all([
+        DB.getEvents().catch(() => []),
+        DB.getRegistrants().catch(() => []),
+        DB.getSettings().catch(() => ({})),
+      ]);
+      _cache.events = events || [];
+      _cache.regs = regs || [];
+      _cache.settings = settings || {};
+    } catch (err) {
+      console.error('Admin init error:', err);
+      _cache.regs = [];
+      _cache.events = [];
+      _cache.settings = {};
+    }
     await initFilters();
     await applyFilters();
   })();
