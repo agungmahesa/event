@@ -191,9 +191,9 @@
     let regs = await getRegs(forceRefresh).catch(() => []);
     regs = regs || [];
     if (q) regs = regs.filter(r =>
-      r.name.toLowerCase().includes(q) ||
-      r.email.toLowerCase().includes(q) ||
-      r.id.toLowerCase().includes(q) ||
+      (r.name || '').toLowerCase().includes(q) ||
+      (r.email || '').toLowerCase().includes(q) ||
+      (r.id || '').toLowerCase().includes(q) ||
       (r.phone || '').includes(q)
     );
     if (evId) regs = regs.filter(r => r.eventId === evId);

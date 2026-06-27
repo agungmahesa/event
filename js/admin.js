@@ -158,7 +158,7 @@ async function renderRecentRegistrants(eventId = '') {
   if (search) regs = regs.filter(r =>
     (r.name || r.fullName || '').toLowerCase().includes(search) ||
     (r.email || '').toLowerCase().includes(search) ||
-    r.id.toLowerCase().includes(search)
+    (r.id || '').toLowerCase().includes(search)
   );
 
   regs = regs.sort((a, b) => new Date(b.createdAt || b.registeredAt) - new Date(a.createdAt || a.registeredAt));
