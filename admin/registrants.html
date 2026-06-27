@@ -371,7 +371,7 @@
       // Timeout wrapper to prevent infinite loading if Supabase hangs
       const fetchWithTimeout = (promise) => Promise.race([
         promise,
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout dari Supabase (Lebih dari 10 detik)')), 10000))
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout dari Supabase (Lebih dari 60 detik)')), 60000))
       ]);
 
       const [events, regs, settings] = await Promise.all([

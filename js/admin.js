@@ -69,7 +69,7 @@ function initSidebar() {
 async function initDashboard() {
   const fetchWithTimeout = (promise, name) => Promise.race([
     promise,
-    new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout ' + name)), 10000))
+    new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout ' + name)), 60000))
   ]);
 
   // Load all dashboard data in parallel (much faster than sequential awaits)
