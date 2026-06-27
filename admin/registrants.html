@@ -458,30 +458,31 @@
     const regId = generateId('REG');
     const qrCode = regId;
 
+    const qty = parseInt(document.getElementById('ar-quantity').value) || 1;
     const reg = {
       id: regId,
       qrCode,
       eventId,
       name,
-      fullName: name,
       email,
       phone: document.getElementById('ar-phone').value.trim(),
       institution: document.getElementById('ar-institution').value.trim(),
-      company: document.getElementById('ar-institution').value.trim(),
       address: document.getElementById('ar-city').value.trim(),
       ticketType: tTypePacked,
       ticketId: tIdPacked,
       ticketPrice: 0,
-      quantity: parseInt(document.getElementById('ar-quantity').value) || 1,
-      totalPrice: 0,
-      paymentMethod: 'invitation',
-      paymentStatus: 'free',
-      bookingStatus: 'confirmed',
+      quantity: qty,
+      subtotal: 0,
       promoCode: 'INVITATION',
       discountAmount: 0,
+      totalPrice: 0,
+      paymentMethod: 'invitation',
+      agreedToTerms: true,
       registeredAt: new Date().toISOString(),
-      createdAt: new Date().toISOString(),
+      paymentStatus: 'free',
+      bookingStatus: 'confirmed',
       checkedIn: false,
+      checkedInAt: null,
     };
 
     const result = await DB.saveRegistrant(reg);
