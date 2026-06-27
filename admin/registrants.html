@@ -375,8 +375,8 @@
       ]);
 
       const [events, regs, settings] = await Promise.all([
-        fetchWithTimeout(DB.getEvents()).catch(e => { console.error('Events fail:', e); return []; }),
-        fetchWithTimeout(DB.getRegistrants()).catch(e => { console.error('Regs fail:', e); return []; }),
+        fetchWithTimeout(DB.getEvents()).catch(e => { showToast('Gagal memuat Event: ' + e.message, 'error'); return []; }),
+        fetchWithTimeout(DB.getRegistrants()).catch(e => { showToast('Gagal memuat Peserta: ' + e.message, 'error'); return []; }),
         fetchWithTimeout(DB.getSettings()).catch(e => { console.error('Settings fail:', e); return {}; }),
       ]);
       _cache.events = events || [];
