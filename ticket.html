@@ -364,7 +364,7 @@
     btn.disabled = true; btn.textContent = '⏳ Mengirim...';
 
     setTimeout(async () => {
-      const result = await DB.updatePaymentProof(currentRegId, proofBase64);
+      const result = await DB.uploadPaymentProof(currentRegId, proofBase64);
       if (result.error) {
         showToast('Gagal mengirim bukti: ' + result.error, 'error');
         btn.disabled = false; btn.textContent = ' Kirim Bukti Pembayaran';
