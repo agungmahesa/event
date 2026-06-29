@@ -126,13 +126,13 @@ const DB = {
   // Registrants
   async getRegistrants() {
     if (!supabase) return [];
-    const { data, error } = await supabase.from('registrants').select('*').order('registeredAt', { ascending: false });
+    const { data, error } = await supabase.from('registrants').select('id, eventId, qrCode, name, email, phone, institution, address, ticketType, ticketId, ticketPrice, paymentMethod, agreedToTerms, registeredAt, paymentStatus, bookingStatus, checkedIn, checkedInAt, paymentProofAt, approvedAt, rejectedAt, rejectionReason, quantity, totalPrice, subtotal, promoCode, discountAmount').order('registeredAt', { ascending: false });
     if (error) { console.error('getRegistrants error:', error); return []; }
     return data || [];
   },
   async getRegistrantsByEvent(eventId) {
     if (!supabase) return [];
-    const { data, error } = await supabase.from('registrants').select('*').eq('eventId', eventId);
+    const { data, error } = await supabase.from('registrants').select('id, eventId, qrCode, name, email, phone, institution, address, ticketType, ticketId, ticketPrice, paymentMethod, agreedToTerms, registeredAt, paymentStatus, bookingStatus, checkedIn, checkedInAt, paymentProofAt, approvedAt, rejectedAt, rejectionReason, quantity, totalPrice, subtotal, promoCode, discountAmount').eq('eventId', eventId);
     if (error) { console.error('getRegistrantsByEvent error:', error); return []; }
     return data || [];
   },
@@ -184,7 +184,7 @@ const DB = {
   // Payment management
   async getPendingPayments() {
     if (!supabase) return [];
-    const { data, error } = await supabase.from('registrants').select('*').eq('paymentStatus', 'pending');
+    const { data, error } = await supabase.from('registrants').select('id, eventId, qrCode, name, email, phone, institution, address, ticketType, ticketId, ticketPrice, paymentMethod, agreedToTerms, registeredAt, paymentStatus, bookingStatus, checkedIn, checkedInAt, paymentProofAt, approvedAt, rejectedAt, rejectionReason, quantity, totalPrice, subtotal, promoCode, discountAmount').eq('paymentStatus', 'pending');
     if (error) { console.error('getPendingPayments error:', error); return []; }
     return data || [];
   },

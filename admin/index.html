@@ -185,7 +185,7 @@
     
     for (const r of pending) {
       const ev = events.find(e => e.id === r.eventId);
-      const hasProof = !!r.paymentProof;
+      const hasProof = !!r.paymentProofAt;
       
       // Build WA link for instructions
       let waLink = '#';

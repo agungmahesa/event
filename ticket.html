@@ -299,25 +299,63 @@
     document.getElementById(state).classList.remove('hidden');
   }
 
+  function compressImage(file, callback) {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = function (event) {
+      const img = new Image();
+      img.src = event.target.result;
+      img.onload = function () {
+        const MAX_WIDTH = 1200;
+        const MAX_HEIGHT = 1200;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height = Math.round(height * (MAX_WIDTH / width));
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width = Math.round(width * (MAX_HEIGHT / height));
+            height = MAX_HEIGHT;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.75); // compress to 75% quality JPEG
+        callback(dataUrl);
+      }
+    };
+  }
+
   function handleProofUpload(e) {
     const file = e.target.files[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      showToast('Ukuran file maksimal 5MB', 'error');
+    if (file.size > 15 * 1024 * 1024) { // allow up to 15MB before compressing
+      showToast('Ukuran file maksimal 15MB', 'error');
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = function(evt) {
-      proofBase64 = evt.target.result;
+    const btn = document.getElementById('btn-upload-proof');
+    btn.disabled = true;
+    btn.textContent = '⏳ Mengompresi gambar...';
+
+    compressImage(file, function(compressedBase64) {
+      proofBase64 = compressedBase64;
       document.getElementById('proof-img').src = proofBase64;
       document.getElementById('proof-preview').classList.remove('hidden');
       document.getElementById('proof-upload-time').textContent = 'Siap dikirim';
-      document.getElementById('btn-upload-proof').disabled = false;
-      showToast('Foto bukti dipilih. Klik tombol kirim untuk melanjutkan.', 'info');
-    };
-    reader.readAsDataURL(file);
+      btn.disabled = false;
+      btn.textContent = ' Kirim Bukti Pembayaran';
+      showToast('Foto bukti berhasil dikompresi. Klik tombol kirim.', 'info');
+    });
   }
 
   function submitProof() {

@@ -241,7 +241,7 @@
       let rowsHtml = '';
       for (const r of pageRegs) {
         const ev = events.find(e => e.id === r.eventId);
-        const hasProof = !!r.paymentProof;
+        const hasProof = !!r.paymentProofAt;
         const approveBtn = r.paymentStatus === 'pending'
           ? `<button class="btn btn-success btn-sm" onclick="approvePayment('${r.id}')" style="height:30px;padding:0 0.5rem;font-size:0.72rem;">✅</button>`
           : '';
